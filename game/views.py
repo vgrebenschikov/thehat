@@ -5,10 +5,13 @@ from game.hat import HatGame
 
 class Login(web.View):
     async def get(self):
-        ret = {'players': HatGame.players}
+        ret = {
+                'num_players': HatGame.num_players,
+                'players': list(self.request.app.game.players.keys())
+              }
         return web.Response(
                     content_type="application/json",
-                    text=json.dumps(ret))
+                    text=json.dumps(ret, indent=4))
 
 
 class Words(web.View):
@@ -18,23 +21,31 @@ class Words(web.View):
 
 class WebSocket(web.View):
     async def get(self):
+        log.debug('websocket new connection')
         ws = web.WebSocketResponse()
-        await ws.prepare(self.request)
-        print("WS")
 
-        self.request.app['websockets'].append(ws)
+        self.request.app.websockets.append(ws)
+
+        await ws.prepare(self.request)
 
         async for msg in ws:
-            if msg.tp == WSMsgType.text:
+            log.debug(f'websocket message received: {msg.type} {msg.data.strip()}')
+            if msg.type == WSMsgType.text:
                 if msg.data == 'close':
                     await ws.close()
                 else:
-                    for _ws in self.request.app['websockets']:
-                        _ws.send_str('--%s--' % msg.data)
-            elif msg.tp == WSMsgType.error:
+                    try:
+                        data = json.loads(msg.data)
+                    except Exception as e:
+                        log.error('broken message received %s' % e)
+
+                    cmd = data['cmd']
+                    await getattr(self.request.app.game, cmd)(ws, data)
+
+            elif msg.type == WSMsgType.error:
                 log.debug('ws connection closed with exception %s' % ws.exception())
 
-        self.request.app['websockets'].remove(ws)
+        self.request.app.websockets.remove(ws)
         log.debug('websocket connection closed')
 
         return ws

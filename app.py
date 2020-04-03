@@ -4,6 +4,7 @@ from aiohttp import web
 
 from game.views import Login, Words, WebSocket
 from settings import *
+from game.hat import HatGame
 
 async def on_shutdown(app):
     for ws in app['websockets']:
@@ -19,12 +20,13 @@ async def shutdown(server, app, handler):
 
 
 app = web.Application()
-app['websockets'] = []
+setattr(app, 'websockets', [])
+setattr(app, 'game', HatGame())
 
 app.add_routes([
-                web.get ('/',       Login, name='login'),
-                web.post('/words',  Words, name='words'),
-                web.get('/ws', WebSocket, name='game')
+                web.get ('/',       Login,      name='login'),
+                web.post('/words',  Words,      name='words'),
+                web.get('/ws',      WebSocket,  name='game')
 ])
 
 if __name__ == '__main__':

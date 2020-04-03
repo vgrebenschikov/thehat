@@ -14,8 +14,7 @@ log.addHandler(ch)
 if isfile('.env'):
     env.read_envfile('.env')
 
-DEBUG = True
+DEBUG = env.str('DEBUG', default=True)
 
-SITE_HOST = env.str('HOST') or '0.0.0.0'
-SITE_PORT = env.int('PORT') or '8080'
-
+SITE_HOST = env.str('HOST', default='0.0.0.0')
+SITE_PORT = env.str('PORT', default='8080')
