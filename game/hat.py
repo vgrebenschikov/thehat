@@ -1,35 +1,32 @@
 from settings import log
-
-class Player:
-    name = None
-
-    def __init__(self, name, ws = None):
-        self.name = name
-        self.socket = ws
-
-    def set_socket(self, ws):
-        self.socket = ws
-
-    def __str__(self):
-        return f'{self.name} - {self.socket}'
+from game.player import Player
+import uuid
 
 class HatGame:
     num_players = 10
+    num_words = 6
+    id = None
     players = None
+    sockets = None
 
     def __init__(self):
         self.players = {}
+        self.sockets = {}
+        self.id = str(uuid.uuid4())
 
-    async def login(self, ws, data):
+    async def name(self, ws, data):
         name = data['name']
-        log.debug(f'user {name} logged in as {ws}')
-        self.players[name] = Player(name, ws)
+        log.debug(f'user {name} logged in as {id(ws)}')
+        player = Player(name=name, ws=ws)
+        self.players[name] = player
+        self.sockets[id(ws)] = player
+        await self.game(ws)
 
-    async def list_players(self, ws, data):
-        log.debug(f'list players')
-        ret = []
-        for p in self.players.values():
-            log.debug(f'{p.name}: {p}')
-            ret.append(p.name)
+    async def game(self, ws):
+        await ws.send_json({'cmd': 'game', 'id': self.id, 'numwords': self.num_words})
 
-        await ws.send_json(ret)
+    async def words(self, ws, data):
+        words = data['words']
+        p = self.sockets[id(ws)]
+        p.set_words(words)
+        log.debug(f'user {p.name} sent words: {words}')

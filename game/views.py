@@ -20,6 +20,10 @@ class Words(web.View):
         return "xxxx"
 
 class WebSocket(web.View):
+    async def error(self, ws, code, message):
+        log.error(message)
+        await ws.send_json({'code': code, 'message': message})
+
     async def get(self):
         log.debug('websocket new connection')
         ws = web.WebSocketResponse()
@@ -29,7 +33,7 @@ class WebSocket(web.View):
         await ws.prepare(self.request)
 
         async for msg in ws:
-            log.debug(f'websocket message received: {msg.type} {msg.data.strip()}')
+            log.debug(f'websocket message received: {msg.type}: {msg.data.strip()}')
             if msg.type == WSMsgType.text:
                 if msg.data == 'close':
                     await ws.close()
@@ -37,10 +41,25 @@ class WebSocket(web.View):
                     try:
                         data = json.loads(msg.data)
                     except Exception as e:
-                        log.error('broken message received %s' % e)
+                        await self.error(ws, 101, f'Broken message received {e}')
+                        continue
 
-                    cmd = data['cmd']
-                    await getattr(self.request.app.game, cmd)(ws, data)
+                    if not 'cmd' in data:
+                        await self.error(ws, 102, f'Invalid message format {msg.data}')
+                        continue
+                    else:
+                        cmdtxt = data['cmd']
+
+                    cmd = getattr(self.request.app.game, cmdtxt, None)
+                    if not callable(cmd):
+                        await self.error(ws, 103, f'Unknown command {cmdtxt}')
+                        continue
+
+                    try:
+                        log.debug(f'Received command {cmdtxt}')
+                        await cmd(ws, data)
+                    except Exception as e:
+                        await self.error(ws, 104, f'Error executing command {cmdtxt}: {e}')
 
             elif msg.type == WSMsgType.error:
                 log.debug('ws connection closed with exception %s' % ws.exception())
