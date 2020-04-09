@@ -30,3 +30,11 @@ class HatGame:
         p = self.sockets[id(ws)]
         p.set_words(words)
         log.debug(f'user {p.name} sent words: {words}')
+
+        # send prepare message to all players
+        for p in self.players.values():
+            await self.prepare(p.socket)
+
+    async def prepare(self, ws):
+        players = [p.name for p in self.players.values()]
+        await ws.send_json({'cmd': 'prepare', 'players': players})
