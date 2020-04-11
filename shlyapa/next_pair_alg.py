@@ -1,19 +1,23 @@
-from SupportClasses import Pair
+from pair import Pair
 
 
 class NextPairAlg:
-    def get_start_pair(self, config):
+    @staticmethod
+    def get_start_pair(config):
         pass
 
-    def get_next_pair(self, config, cur_pair, cur_turn):
+    @staticmethod
+    def get_next_pair(config, cur_pair, cur_turn):
         pass
 
 
 class Original(NextPairAlg):
-    def get_start_pair(self, config):
+    @staticmethod
+    def get_start_pair(config):
         return Pair(0, int(config.number_players / 2))
 
-    def get_next_pair(self, config, cur_pair, cur_turn):
+    @staticmethod
+    def get_next_pair(config, cur_pair, cur_turn):
         return Pair((cur_pair.explaining + 1) % config.number_players,
                     (cur_pair.guessing + 1) % config.number_players)
 
@@ -32,10 +36,12 @@ class AVA(NextPairAlg):
     def get_cur_round(config, cur_turn):
         return int(cur_turn / config.number_players)
 
-    def get_start_pair(self, config):
+    @staticmethod
+    def get_start_pair(config):
         return Pair(0, 1)
 
-    def get_next_pair(self, config, cur_pair, cur_turn):
+    @staticmethod
+    def get_next_pair(config, cur_pair, cur_turn):
         if cur_pair.explaining + 1 == config.number_players:
             return Pair(0, AVA.get_round_shift(config, cur_turn))
         return Pair((cur_pair.explaining + 1) % config.number_players,
@@ -43,10 +49,12 @@ class AVA(NextPairAlg):
 
 
 class AVAF(AVA):
-    def get_start_pair(self, config):
+    @staticmethod
+    def get_start_pair(config):
         return Pair(0, 1)
 
-    def get_next_pair(self, config, cur_pair, cur_turn):
+    @staticmethod
+    def get_next_pair(config, cur_pair, cur_turn):
         round_shift = AVAF.get_round_shift(config, cur_turn)
 
         is_less_than_two_blocks = int(config.number_players / (2 * round_shift)) == 0

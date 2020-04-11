@@ -1,5 +1,6 @@
-import NextPairAlg
-from SupportClasses import *
+import next_pair_alg
+from config import *
+from pair import *
 
 
 class Game:
