@@ -4,7 +4,7 @@ import "firebase/auth";
 import "firebase/firestore";
 import {action, computed, observable, runInAction} from "mobx";
 import Game from "./Game";
-import RuLette from '../rulette';
+import firebaseConfig from 'firebase-config';
 
 export default class DataStore {
     @observable user: User | null = null;
@@ -24,16 +24,6 @@ export default class DataStore {
     };
 
     constructor() {
-        const firebaseConfig = {
-            apiKey: "AIzaSyB6NeHhDMD0xFmncv6gdm0QfXWslGkIX7o",
-            authDomain: "cotif-272120.firebaseapp.com",
-            databaseURL: "https://cotif-272120.firebaseio.com",
-            projectId: "cotif-272120",
-            storageBucket: "cotif-272120.appspot.com",
-            messagingSenderId: "805848413148",
-            appId: "1:805848413148:web:e3e8606c8aaa2fee1b9519",
-            measurementId: "G-CFFSQHQZXL"
-        };
         firebase.initializeApp(firebaseConfig);
         firebase.auth().onAuthStateChanged(this.authChanged);
     }
