@@ -9,10 +9,17 @@ class HatGame:
     players = None
     sockets = None
 
+    ST_CONFIG = 'config'
+    ST_PLAY = 'play'
+    ST_FINISH = 'finish'
+
     def __init__(self):
         self.players = {}
         self.sockets = {}
         self.id = str(uuid.uuid4())
+        self.state = HatGame.ST_CONFIG
+        self.round_ctr = 0
+        self.turn_ctr = 0
 
     async def name(self, ws, data):
         name = data['name']
@@ -38,3 +45,28 @@ class HatGame:
     async def prepare(self, ws):
         players = [p.name for p in self.players.values()]
         await ws.send_json({'cmd': 'prepare', 'players': players})
+
+    async def play(self, ws, data):
+        states = [p.state for p in self.players.values()]
+        if states.count(Player.ST_READY) != len(states):
+            await self.wait(ws)
+        else:
+            self.state = HatGame.ST_PLAY
+            self.round_ctr = 1
+            for p in self.players.values():
+                await self.round(p.socket)
+
+    async def wait(self, ws):
+        log.debug('Wait for other players')
+        await ws.send_json({'cmd': 'wait'})
+
+    async def round(self, ws):
+        await ws.send_json({'cmd': 'round', 'round': self.round_ctr})
+
+##    async def turn(self, ws):
+        
+
+
+
+
+        
