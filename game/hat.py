@@ -5,12 +5,6 @@ from shlyapa import Shlyapa, Config
 import uuid
 
 class HatGame:
-    num_players = 10
-    num_words = 6
-    id = None
-    players = None
-    sockets = None
-
     ST_CONFIG = 'config'
     ST_PLAY = 'play'
     ST_FINISH = 'finish'
@@ -20,8 +14,8 @@ class HatGame:
         self.sockets = {}
         self.id = str(uuid.uuid4())
         self.state = HatGame.ST_CONFIG
-        self.round_ctr = 0
-        self.turn_ctr = 0
+        self.shlyapa = None
+        self.num_words = 6
 
     async def name(self, ws, data):
         name = data['name']
@@ -49,14 +43,13 @@ class HatGame:
         await ws.send_json({'cmd': 'prepare', 'players': players})
 
     async def play(self, ws, data):
+        if self.state != HatGame.ST_CONFIG:
+            raise ValueError(f"Can't start game in '{self.state}' state")
+
         states = [p.state for p in self.players.values()]
         if states.count(Player.ST_READY) != len(states):
             await self.wait(ws)
-        else:
-            self.state = HatGame.ST_PLAY
-            self.round_ctr = 1
-            for p in self.players.values():
-                await self.round(p.socket)
+            return
 
         cfg = Config(
                 number_players=len(self.players),
@@ -64,15 +57,18 @@ class HatGame:
               )
         self.shlyapa = Shlyapa(config=cfg)
 
+        self.state = HatGame.ST_PLAY
+        for p in self.players.values():
+            await self.tour(p.socket)
+
+
     async def wait(self, ws):
         log.debug('Wait for other players')
         await ws.send_json({'cmd': 'wait'})
 
-    async def round(self, ws):
-        await ws.send_json({'cmd': 'round', 'round': self.round_ctr})
+    async def tour(self, ws):
+        await ws.send_json({'cmd': 'tour', 'tour': self.shlyapa.get_cur_tour()})
 
-##    async def turn(self, ws):
-        
 
 
 

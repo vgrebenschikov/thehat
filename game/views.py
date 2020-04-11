@@ -59,8 +59,8 @@ class WebSocket(web.View):
                         log.debug(f'Received command {cmdtxt}')
                         await cmd(ws, data)
                     except Exception as e:
-                        log.exception('Error executing command {cmdtxt}: {e}')
-                        await self.error(ws, 104, f'Error executing command {cmdtxt}: {e}')
+                        log.exception(f"Exception caught while execution of '{cmdtxt}': {e}")
+                        await self.error(ws, 104, f"Error executing command '{cmdtxt}': {e}")
 
             elif msg.type == WSMsgType.error:
                 log.debug('ws connection closed with exception %s' % ws.exception())
