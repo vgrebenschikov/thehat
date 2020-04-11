@@ -1,0 +1,4 @@
+h - shows this help
+u - it's undo last turn, if turn is first, has no effect
+q - quit to menu
+r - move to results
