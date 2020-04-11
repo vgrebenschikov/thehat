@@ -3,7 +3,6 @@ from shlyapa.next_pair_alg import *
 
 default_config_game_filepath = "config/game.yaml"
 
-print(NextPairAlg)
 class Config(object):
     def __init__(self,
                  type=AVAF,
