@@ -2,8 +2,6 @@ import yaml
 from enum import Enum
 
 default_config_game_filepath = "config/game.yaml"
-# default_config_results_filepath = "config/results.yaml"
-# default_csv_results_filepath = "results/results.csv"
 
 
 class Config(object):
@@ -12,14 +10,20 @@ class Config(object):
         AVA = 1,       # All Vs All is unfair variant game "all vs all" shlyapa move clear on circle
         AVAF = 2       # All Vs All Fair is more fair variant game "all vs all" shlyapa move not clear on circle
 
-    def __init__(self, config_filepath=default_config_game_filepath):
-        self.is_last_turn_in_tour_divisible = None
+    def __init__(self, type, number_players, number_words, number_tours=3, is_last_turn_in_tour_divisible=True):
         self.type = None
         self.number_players = None
-        self.number_tours = None
         self.number_words = None
-        self.names = None
+        self.number_tours = None
+        self.is_last_turn_in_tour_divisible = None
 
+        self.set_type(type)
+        self.set_number_players(number_players)
+        self.set_number_words(number_words)
+        self.set_number_tours(number_tours)
+        self.set_is_last_turn_in_tour_divisible(is_last_turn_in_tour_divisible)
+
+    def set_from_file(self, config_filepath=default_config_game_filepath):
         with open(config_filepath) as f:
             values = yaml.safe_load(f)
             self.set_type(values["type"])
@@ -27,7 +31,6 @@ class Config(object):
             self.set_number_words(values["number_words"])
             self.set_number_tours(values["number_tours"])
             self.set_is_last_turn_in_tour_divisible(values["is_last_turn_in_tour_divisible"])
-            self.set_names(values["names"])
 
     def set_type(self, type):
         if isinstance(type, Config.TypeGame):
@@ -71,8 +74,3 @@ class Config(object):
         if not isinstance(is_last_turn_in_tour_divisible, bool):
             raise ValueError("is_last_turn_in_tour_divisible must be bool")
         self.is_last_turn_in_tour_divisible = is_last_turn_in_tour_divisible
-
-    def set_names(self, names):
-        if not (isinstance(names, list) and all(isinstance(elem, str) for elem in names)):
-            raise ValueError("names must be list of strings")
-        self.names = names

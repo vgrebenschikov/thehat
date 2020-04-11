@@ -1,6 +1,7 @@
 import next_pair_alg
 from config import *
 from pair import *
+import random
 
 
 class Game:
@@ -152,3 +153,19 @@ class Game:
             while self.is_new() and prev_pair == self.__tours[-1].explanations[-1].pair:
                 self.__pop_explanation(True)
             self.__next_pair = prev_pair
+
+
+if __name__ == '__main__':
+    def print_shlyapa(game, end):
+        print("Round: ", game.get_cur_round(),
+              "Tour: ", game.get_cur_tour(),
+              "Turn: ", game.get_cur_turn(),
+              "Pair", game.get_next_pair().explaining, " ", game.get_next_pair().guessing,
+              sep=" ", end=" " + end + "\n")
+
+
+    g = Game()
+
+    while not g.is_end():
+        g.move_shlyapa(pair_explained_words=random.randint(0,1))
+        print_shlyapa(g, "move")

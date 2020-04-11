@@ -1,4 +1,0 @@
- #import to ./results/results.csv results game after game
- csv_import: true
- #write in .csv statistic about each tour
- expanded_results: false

@@ -6,18 +6,9 @@ type: AVAF
 # Must be more than 1
 # Must be even for original game
 number_players: 4
-number_tours: 3
 number_words: 20
+number_tours: 3
 
 # if true - last turn in tour can split to two without loss of time
 # if false - it can't
 is_last_turn_in_tour_divisible: true
-
-# First num_players lines will be names of players.
-# If lines less than num_players, program automatically add names with pattern: Player i
-# If is_original - true, than pairs will have the form (lines[i], lines[i + num_players / 2]), where lines[i] = name[i] | Player j
-names:
-  - Ira
-  - Vanya
-  - Papa
-  - Mama
