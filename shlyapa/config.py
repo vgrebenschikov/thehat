@@ -10,7 +10,7 @@ class Config(object):
         AVA = 1,       # All Vs All is unfair variant game "all vs all" shlyapa move clear on circle
         AVAF = 2       # All Vs All Fair is more fair variant game "all vs all" shlyapa move not clear on circle
 
-    def __init__(self, type, number_players, number_words, number_tours=3, is_last_turn_in_tour_divisible=True):
+    def __init__(self, type=None, number_players=None, number_words=None, number_tours=3, is_last_turn_in_tour_divisible=True):
         self.type = None
         self.number_players = None
         self.number_words = None
