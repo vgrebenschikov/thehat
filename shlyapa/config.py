@@ -23,7 +23,7 @@ class Config(object):
         self.set_number_tours(number_tours)
         self.set_is_last_turn_in_tour_divisible(is_last_turn_in_tour_divisible)
 
-    def set_from_file(self, config_filepath=default_config_game_filepath):
+    def set_load(self, config_filepath=default_config_game_filepath):
         with open(config_filepath) as f:
             values = yaml.safe_load(f)
             self.set_type(values["type"])
