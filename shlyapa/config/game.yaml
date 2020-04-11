@@ -1,0 +1,14 @@
+# May be:
+# ORIGINAL - number_players must be even
+# AVA - All Vs All is unfair variant game "all vs all" shlyapa move clear on circle
+# AVAF - All Vs All Fair is more fair variant game "all vs all" shlyapa move not clear on circle
+type: AVAF
+# Must be more than 1
+# Must be even for original game
+number_players: 4
+number_words: 20
+number_tours: 3
+
+# if true - last turn in tour can split to two without loss of time
+# if false - it can't
+is_last_turn_in_tour_divisible: true
