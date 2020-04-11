@@ -7,7 +7,7 @@ from game.hat import HatGame
 class Login(web.View):
     async def get(self):
         ret = {
-            'num_players': HatGame.num_players,
+            'num_players': len(self.request.app.game.players),
             'players': list(self.request.app.game.players.keys())
         }
         return web.Response(

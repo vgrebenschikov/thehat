@@ -18,8 +18,8 @@ async def shutdown(server, app, handler):
     await app.cleanup()
 
 app = web.Application()
-setattr(app, 'websockets', [])
-setattr(app, 'game', HatGame())
+app.websockets = []
+app.game = HatGame()
 
 app.add_routes((
     web.get('/', Login, name='login'),
