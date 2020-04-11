@@ -164,7 +164,7 @@ if __name__ == '__main__':
               sep=" ", end=" " + end + "\n")
 
 
-    g = Game()
+    g = Game(type=Config.TypeGame.AVAF, number_players=4, number_words=20)
 
     while not g.is_end():
         g.move_shlyapa(pair_explained_words=random.randint(0,1))
