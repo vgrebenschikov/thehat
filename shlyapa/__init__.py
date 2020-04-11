@@ -1,3 +1,3 @@
-from shlyapa.shlyapa import Shlyapa
-from shlyapa.config import Config
-from shlyapa.next_pair_alg import *
+from shlyapa.shlyapa import Shlyapa # noqa
+from shlyapa.config import Config   # noqa
+from shlyapa.next_pair_alg import * # noqa

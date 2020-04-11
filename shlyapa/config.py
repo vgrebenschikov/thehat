@@ -1,7 +1,9 @@
+from shlyapa.next_pair_alg import (AVA, AVAF, NextPairAlg, Original)
+
 import yaml
-from shlyapa.next_pair_alg import *
 
 default_config_game_filepath = "config/game.yaml"
+
 
 class Config(object):
     def __init__(self,

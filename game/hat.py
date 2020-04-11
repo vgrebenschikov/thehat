@@ -4,6 +4,7 @@ from shlyapa import Shlyapa, Config
 
 import uuid
 
+
 class HatGame:
     ST_CONFIG = 'config'
     ST_PLAY = 'play'
@@ -52,15 +53,14 @@ class HatGame:
             return
 
         cfg = Config(
-                number_players=len(self.players),
-                number_words=sum([len(p.words) for p in self.players.values()])
-              )
+            number_players=len(self.players),
+            number_words=sum([len(p.words) for p in self.players.values()]))
+
         self.shlyapa = Shlyapa(config=cfg)
 
         self.state = HatGame.ST_PLAY
         for p in self.players.values():
             await self.tour(p.socket)
-
 
     async def wait(self, ws):
         log.debug('Wait for other players')
@@ -68,9 +68,3 @@ class HatGame:
 
     async def tour(self, ws):
         await ws.send_json({'cmd': 'tour', 'tour': self.shlyapa.get_cur_tour()})
-
-
-
-
-
-        

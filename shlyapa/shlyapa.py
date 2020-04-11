@@ -1,6 +1,5 @@
-from shlyapa.next_pair_alg import *
-from shlyapa.config import *
-from shlyapa.pair import *
+from shlyapa.config import Config
+from shlyapa.pair import Pair
 import random
 
 
@@ -58,7 +57,7 @@ class Shlyapa:
             raise ValueError("too many words in tour")
 
         if self.is_new() or self.__tours[-1].is_end():
-            self.__tours.append(Game.Tour(self.config.number_words))
+            self.__tours.append(Shlyapa.Tour(self.config.number_words))
 
         self.__tours[-1].add_explanation(explanation)
         if not is_fiction:
@@ -125,17 +124,17 @@ class Shlyapa:
                 self.config.number_words - self.get_number_explained_in_cur_tour() < pair_explained_words \
                 <= self.config.number_words - self.get_number_explained_in_cur_tour() + \
                 (self.config.number_tours - 1 - self.get_cur_tour()) * self.config.number_words:
-    
+
             number_words_to_end_tour = self.config.number_words - self.get_number_explained_in_cur_tour()
-            self.__add_explanation(Game.Explanation(self.__next_pair, number_words_to_end_tour))
+            self.__add_explanation(Shlyapa.Explanation(self.__next_pair, number_words_to_end_tour))
             pair_explained_words -= number_words_to_end_tour
-            
+
             while pair_explained_words > 0:
-                self.__add_explanation(Game.Explanation(
+                self.__add_explanation(Shlyapa.Explanation(
                     self.__next_pair, min(self.config.number_words, pair_explained_words)), True)
                 pair_explained_words -= min(self.config.number_words, pair_explained_words)
         else:
-            self.__add_explanation(Game.Explanation(self.__next_pair, pair_explained_words))
+            self.__add_explanation(Shlyapa.Explanation(self.__next_pair, pair_explained_words))
         self.__next_pair = next_next_pair
 
     def return_shlyapa(self):
@@ -148,15 +147,16 @@ class Shlyapa:
 
 
 if __name__ == '__main__':
-    def print_shlyapa(game, end):
-        print("Round: ", game.get_cur_round(),
-              "Tour: ", game.get_cur_tour(),
-              "Turn: ", game.get_cur_turn(),
-              "Pair", game.get_next_pair().explaining, " ", game.get_next_pair().guessing,
+    def print_shlyapa(Shlyapa, end):
+        print("Round: ", Shlyapa.get_cur_round(),
+              "Tour: ", Shlyapa.get_cur_tour(),
+              "Turn: ", Shlyapa.get_cur_turn(),
+              "Pair", Shlyapa.get_next_pair().explaining, " ", Shlyapa.get_next_pair().guessing,
               sep=" ", end=" " + end + "\n")
 
     print("Start!!")
 
+    from shlyapa.next_pair_alg import AVAF
     g = Shlyapa(Config(type=AVAF, number_players=4, number_words=20))
 
     while not g.is_end():
