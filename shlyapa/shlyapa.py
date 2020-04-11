@@ -1,6 +1,6 @@
-from shlyapa.next_pair_alg import *
-from shlyapa.config import *
-from shlyapa.pair import *
+from next_pair_alg import *
+from config import *
+from pair import *
 import random
 
 
@@ -47,15 +47,7 @@ class Game:
         # First pair in sequence of pairs who have not play yet
         self.__next_pair = Pair()
         self.__number_explained_words = 0
-        self.__alg = None
-        if self.config.type == Config.TypeGame.ORIGINAL:
-            self.__alg = Original()
-        elif self.config.type == Config.TypeGame.AVA:
-            self.__alg = AVA()
-        elif self.config.type == Config.TypeGame.AVAF:
-            self.__alg = AVAF()
-        else:
-            ValueError("error config.TypeGame type")
+        self.__alg = self.config.type()
         self.__next_pair = self.__alg.get_start_pair(self.config)
 
     def __add_explanation(self, explanation, is_fiction=False):
@@ -163,9 +155,10 @@ if __name__ == '__main__':
               "Pair", game.get_next_pair().explaining, " ", game.get_next_pair().guessing,
               sep=" ", end=" " + end + "\n")
 
+    print("Start!!")
 
-    g = Game(Config(type=Config.TypeGame.AVAF, number_players=4, number_words=20))
+    g = Game(Config(type=AVAF, number_players=4, number_words=20))
 
     while not g.is_end():
-        g.move_shlyapa(pair_explained_words=random.randint(0,1))
+        g.move_shlyapa(pair_explained_words=random.randint(0, 1))
         print_shlyapa(g, "move")

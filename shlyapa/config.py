@@ -1,15 +1,10 @@
 import yaml
-from enum import Enum
+from next_pair_alg import *
 
 default_config_game_filepath = "config/game.yaml"
 
 
 class Config(object):
-    class TypeGame(Enum):
-        ORIGINAL = 0,  # fixed pairs
-        AVA = 1,       # All Vs All is unfair variant game "all vs all" shlyapa move clear on circle
-        AVAF = 2       # All Vs All Fair is more fair variant game "all vs all" shlyapa move not clear on circle
-
     def __init__(self, type=None, number_players=None, number_words=None, number_tours=3, is_last_turn_in_tour_divisible=True):
         self.type = None
         self.number_players = None
@@ -33,15 +28,15 @@ class Config(object):
             self.set_is_last_turn_in_tour_divisible(values["is_last_turn_in_tour_divisible"])
 
     def set_type(self, type):
-        if isinstance(type, Config.TypeGame):
+        if issubclass(type, NextPairAlg):
             self.type = type
         elif isinstance(type, str):
             if type == "ORIGINAL":
-                self.type = Config.TypeGame.ORIGINAL
+                self.type = Original
             elif type == "AVA":
-                self.type = Config.TypeGame.AVA
+                self.type = AVA
             elif type == "AVAF":
-                self.type = Config.TypeGame.AVAF
+                self.type = AVAF
             else:
                 raise ValueError("Invalid string type of shlyapa")
         else:
@@ -52,7 +47,7 @@ class Config(object):
             raise ValueError("number_players must be int")
         if number_players < 2:
             raise ValueError("Too few players")
-        if number_players % 2 == 1 and self.type == Config.TypeGame.ORIGINAL:
+        if number_players % 2 == 1 and self.type == Original:
             raise ValueError("Number players don't suit to original")
         self.number_players = number_players
 
