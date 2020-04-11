@@ -1,10 +1,10 @@
-from next_pair_alg import *
-from config import *
-from pair import *
+from shlyapa.next_pair_alg import *
+from shlyapa.config import *
+from shlyapa.pair import *
 import random
 
 
-class Game:
+class Shlyapa:
     class Explanation:
         def __init__(self, pair=Pair(), number_explained=0):
             self.pair = Pair(pair.explaining, pair.guessing)
@@ -157,7 +157,7 @@ if __name__ == '__main__':
 
     print("Start!!")
 
-    g = Game(Config(type=AVAF, number_players=4, number_words=20))
+    g = Shlyapa(Config(type=AVAF, number_players=4, number_words=20))
 
     while not g.is_end():
         g.move_shlyapa(pair_explained_words=random.randint(0, 1))

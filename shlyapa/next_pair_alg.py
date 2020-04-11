@@ -1,4 +1,4 @@
-from pair import Pair
+from shlyapa.pair import Pair
 
 
 class NextPairAlg:
