@@ -1,7 +1,7 @@
 from settings import log
-from game.player import Player
+from .msg import *
+from .player import Player
 from shlyapa import Shlyapa, Config
-
 import uuid
 
 
@@ -17,9 +17,10 @@ class HatGame:
         self.state = HatGame.ST_CONFIG
         self.shlyapa = None
         self.num_words = 6
+        self.turn_timer = 20 # seconds
 
-    async def name(self, ws, data):
-        name = data['name']
+    async def name(self, ws, msg: NameMsg):
+        name = msg.name
         log.debug(f'user {name} logged in as {id(ws)}')
         player = Player(name=name, ws=ws)
         self.players[name] = player
@@ -27,10 +28,15 @@ class HatGame:
         await self.game(ws)
 
     async def game(self, ws):
-        await ws.send_json({'cmd': 'game', 'id': self.id, 'numwords': self.num_words})
+        await ws.send_json(
+            GameMsg(
+                id=self.id,
+                numwords=self.num_words,
+                timer=self.turn_timer
+            ).data())
 
-    async def words(self, ws, data):
-        words = data['words']
+    async def words(self, ws, msg : WordsMsg):
+        words = msg.words
         p = self.sockets[id(ws)]
         p.set_words(words)
         log.debug(f'user {p.name} sent words: {words}')
@@ -41,9 +47,9 @@ class HatGame:
 
     async def prepare(self, ws):
         players = [p.name for p in self.players.values()]
-        await ws.send_json({'cmd': 'prepare', 'players': players})
+        await ws.send_json(PrepareMsg(players=players).data())
 
-    async def play(self, ws, data):
+    async def play(self, ws, msg : PlayMsg):
         if self.state != HatGame.ST_CONFIG:
             raise ValueError(f"Can't start game in '{self.state}' state")
 
@@ -64,7 +70,7 @@ class HatGame:
 
     async def wait(self, ws):
         log.debug('Wait for other players')
-        await ws.send_json({'cmd': 'wait'})
+        await ws.send_json(WaitMsg().data())
 
     async def tour(self, ws):
-        await ws.send_json({'cmd': 'tour', 'tour': self.shlyapa.get_cur_tour()})
+        await ws.send_json(TourMsg(tour=self.shlyapa.get_cur_tour()).data())
