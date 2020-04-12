@@ -38,3 +38,14 @@ $ python app.py
 [L:23]# DEBUG    [12-04-2020 01:06:18]  user vova logged in as 4482238864
 ...
 ```
+How to test WebSocket connection:
+```bash
+$ websocat ws://127.0.0.1:8080/ws
+{"cmd": "name", "name": "vova"}
+{"cmd": "game", "id": "7b5e87e5-39d4-481b-bac1-b4bc69e24fc0", "numwords": 6}
+{"cmd": "words", "words": [ "a1", "a2", "a3", "a4", "a5" ]}
+{"cmd": "prepare", "players": ["vova", "leo"]}
+{"cmd": "play"}
+{"cmd": "tour", "tour": 0}
+{"cmd": "play"}
+```
