@@ -49,3 +49,14 @@ $ websocat ws://127.0.0.1:8080/ws
 {"cmd": "tour", "tour": 0}
 {"cmd": "play"}
 ```
+
+## Frontend (development)
+
+You need to supply a set of firebase credentials, placing the config file in `ui/src/firebase-config.ts`. The contents of this file is secret so it is not included in this git.
+
+```bash
+$ cd ui
+$ yarn install
+$ yarn start
+```
+(this will open a browser to http://localhost:3000 and connect to the backend running on localhost:8088 -- note this is not the default port! 8080 is used on my machine for work:)
