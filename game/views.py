@@ -1,6 +1,6 @@
 from aiohttp import web, WSMsgType
 from settings import log
-from .msg import ClientMsg
+from .msg import (ClientMsg, ErrorMsg)
 import json
 from game.hat import HatGame
 
@@ -25,7 +25,7 @@ class Words(web.View):
 class WebSocket(web.View):
     async def error(self, ws, code, message):
         log.error(message)
-        await ws.send_json({'code': code, 'message': message})
+        await ws.send_json(ErrorMsg(code=code, message=message).data())
 
     async def get(self):
         log.debug('websocket new connection')

@@ -50,8 +50,25 @@ class PlayMsg(ClientMsg):
         super().__init__(data)
 
 
+class ReadyMsg(ClientMsg):
+    def __init__(self, data):
+        super().__init__(data)
+
 class ServerMsg(Msg):
     pass
+
+
+class ErrorMsg(ServerMsg):
+    def __init__(self, code=None, message=None):
+        self.code = code
+        self.message = message
+
+    def data(self):
+        return {
+            'cmd': 'error',
+            'code': self.code,
+            'message': self.message
+        }
 
 
 class GameMsg(ServerMsg):
@@ -97,29 +114,75 @@ class TourMsg(ServerMsg):
             'tour': self.tour
         }
 
+
+class TurnMsg(ServerMsg):
+    def __init__(self, turn=None, explain=None, guess=None):
+        self.turn = turn
+        self.explain = explain
+        self.guess = guess
+
+    def data(self):
+        return {
+            'cmd': 'turn',
+            'turn': self.turn,
+            'explain': self.explain,
+            'guess': self.guess
+        }
+
+class StartMsg(ServerMsg):
+    def __init__(self):
+        pass
+
+    def data(self):
+        return {
+            'cmd': 'start'
+        }
+
+class NextMsg(ServerMsg):
+    def __init__(self, word=None):
+        self.word = word
+
+    def data(self):
+        return {
+            'cmd': 'next',
+            'cmd': self.word
+        }
+
 if __name__ == '__main__':
     print('Server Messages:')
 
-    g = GameMsg(id="xxxx-id-here", numwords=10, timer=20)
-    print(f'GameMsg \t{g}')
+    m = GameMsg(id="xxxx-id-here", numwords=10, timer=20)
+    print(f'GameMsg \t{m}')
 
-    p = PrepareMsg(players=["user1", "user2", "user3"])
-    print(f'PrepareMsg \t{p}')
+    m = PrepareMsg(players=["user1", "user2", "user3"])
+    print(f'PrepareMsg \t{m}')
 
-    w = WaitMsg()
-    print(f'WaitMsg \t{w}')
+    m = WaitMsg()
+    print(f'WaitMsg \t{m}')
 
-    t = TourMsg(tour=1)
-    print(f'TourMsg \t{t}')
+    m = TourMsg(tour=1)
+    print(f'TourMsg \t{m}')
+
+    m = TurnMsg(turn=10, explain="user1", guess="user2")
+    print(f'TurnMsg \t{m}')
+
+    m = StartMsg()
+    print(f'StartMsg \t{m}')
+
+    m = NextMsg(word="banana")
+    print(f'NextMsg \t{m}')
 
     print()
     print('Client Messages:')
 
-    n = ClientMsg.msg(json.loads('{"cmd": "name", "name": "vova"}'))
-    print(f'NameMsg \t{n}')
+    m = ClientMsg.msg(json.loads('{"cmd": "name", "name": "vova"}'))
+    print(f'NameMsg \t{m}')
 
-    w = ClientMsg.msg(json.loads('{"cmd": "words", "words": ["apple", "orange", "banana"]}'))
-    print(f'WordsMsg \t{w}')
+    m = ClientMsg.msg(json.loads('{"cmd": "words", "words": ["apple", "orange", "banana"]}'))
+    print(f'WordsMsg \t{m}')
 
-    p = ClientMsg.msg(json.loads('{"cmd": "play"}'))
-    print(f'PlayMsg \t{p}')
+    m = ClientMsg.msg(json.loads('{"cmd": "play"}'))
+    print(f'PlayMsg \t{m}')
+
+    m = ClientMsg.msg(json.loads('{"cmd": "ready"}'))
+    print(f'ReadyMsg \t{m}')
