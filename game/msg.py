@@ -145,7 +145,7 @@ class NextMsg(ServerMsg):
     def data(self):
         return {
             'cmd': 'next',
-            'cmd': self.word
+            'word': self.word
         }
 
 if __name__ == '__main__':
@@ -153,7 +153,7 @@ if __name__ == '__main__':
 
     server_messages = [
         GameMsg(id="xxxx-id-here", numwords=10, timer=20),
-        PrepareMsg(players=["user1", "user2", "user3"]),
+        PrepareMsg(players={"user1":5, "user2":0, "user3":6}),
         WaitMsg(),
         TourMsg(tour=1),
         TurnMsg(turn=10, explain="user1", guess="user2"),

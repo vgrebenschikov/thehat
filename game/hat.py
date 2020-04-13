@@ -78,6 +78,7 @@ class HatGame:
                 numwords=self.num_words,
                 timer=self.turn_timer
             ).data())
+        await self.prepare()
 
     async def words(self, ws, msg : WordsMsg):
         """Player sends it's words to server"""
@@ -86,13 +87,12 @@ class HatGame:
         p.set_words(words)
         log.debug(f'user {p.name} sent words: {words}')
 
-        msg = PrepareMsg(players=[p.name for p in self.players])
-        await self.broadcast(msg)
+        await self.prepare()
 
-    async def prepare(self, ws):
+    async def prepare(self):
         """Notify All Players about changed set of players"""
-        players = [p.name for p in self.players]
-        await ws.send_json(PrepareMsg(players=players).data())
+        players = dict([(p.name,len(p.words)) for p in self.players])
+        await self.broadcast(PrepareMsg(players=players))
 
     async def play(self, ws, msg : PlayMsg):
         """Move Game from ST_SETUP phase to ST_PLAY - start game"""
