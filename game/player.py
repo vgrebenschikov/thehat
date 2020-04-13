@@ -1,5 +1,6 @@
 from settings import log
 
+
 class Player:
     name = None
     state = None

@@ -1,5 +1,5 @@
 from settings import log
-from .msg import *
+from . import message
 from .player import Player
 from shlyapa import Shlyapa, Config
 
@@ -8,7 +8,7 @@ import random
 from collections import namedtuple
 from typing import (List, Dict, Optional)
 
-PlayerPair = namedtuple('PlayerPair' , 'explaining guessing')
+PlayerPair = namedtuple('PlayerPair', 'explaining guessing')
 PlayerList = List[Player]
 PlayerDict = Dict[str, Player]
 
@@ -36,7 +36,7 @@ class HatGame:
         self.state = HatGame.ST_SETUP
         self.shlyapa = None
         self.num_words = 6
-        self.turn_timer = 20 # seconds
+        self.turn_timer = 20  # in seconds
         self.cur_pair = None
         self.cur_word = None
 
@@ -60,7 +60,7 @@ class HatGame:
         for p in self.players:
             await p.socket.send_json(msg.data())
 
-    async def name(self, ws, msg: NameMsg):
+    async def name(self, ws, msg: message.Name):
         """Set my name - (re)login procedure on socket"""
         name = msg.name
         log.debug(f'user {name} logged in as {id(ws)}')
@@ -75,14 +75,14 @@ class HatGame:
     async def game(self, ws):
         """Notify just known Player about Game layout"""
         await ws.send_json(
-            GameMsg(
+            message.Game(
                 id=self.id,
                 numwords=self.num_words,
                 timer=self.turn_timer
             ).data())
         await self.prepare()
 
-    async def words(self, ws, msg : WordsMsg):
+    async def words(self, ws, msg: message.Words):
         """Player sends it's words to server"""
         words = msg.words
         p = self.sockets_map[id(ws)]
@@ -93,10 +93,10 @@ class HatGame:
 
     async def prepare(self):
         """Notify All Players about changed set of players"""
-        players = dict([(p.name,len(p.words)) for p in self.players])
-        await self.broadcast(PrepareMsg(players=players))
+        players = dict([(p.name, len(p.words)) for p in self.players])
+        await self.broadcast(message.Prepare(players=players))
 
-    async def play(self, ws, msg : PlayMsg):
+    async def play(self, ws, msg: message.Play):
         """Move Game from ST_SETUP phase to ST_PLAY - start game"""
         if self.state != HatGame.ST_SETUP:
             raise ValueError(f"Can't start game in '{self.state}' state")
@@ -120,12 +120,12 @@ class HatGame:
     async def wait(self, ws):
         """Response to the player on attempt to start game with not all players ready"""
         log.debug('Wait for other players')
-        await ws.send_json(WaitMsg().data())
+        await ws.send_json(message.Wait().data())
 
     async def tour(self):
         """Notify All Players about tour start, happens at begin of each tour"""
         self.tour_words = self.all_words
-        await self.broadcast(TourMsg(tour=self.shlyapa.get_cur_tour()))
+        await self.broadcast(message.Tour(tour=self.shlyapa.get_cur_tour()))
 
     async def next_move(self):
         """Do next move, called on game start or after move finished"""
@@ -137,17 +137,17 @@ class HatGame:
 
         log.debug(f'Pair selected: explain={exp.name} guessing={gss.name}')
 
-        msg = TurnMsg(turn=s.get_cur_turn(), explain=exp.name, guess=gss.name)
-        await self.broadcast(msg)
+        m = message.Turn(turn=s.get_cur_turn(), explain=exp.name, guess=gss.name)
+        await self.broadcast(m)
 
     async def next_word(self):
         """Select next word for pair"""
-        self.cur_word = self.tour_words.pop(random.randint(0,len(self.tour_words)-1))
+        self.cur_word = self.tour_words.pop(random.randint(0, len(self.tour_words) - 1))
 
-        msg = NextMsg(word=self.cur_word)
-        await self.cur_pair.explaining.socket.send_json(msg.data())
+        m = message.Next(word=self.cur_word)
+        await self.cur_pair.explaining.socket.send_json(m.data())
 
-    async def ready(self, ws, msg : ReadyMsg):
+    async def ready(self, ws, msg: message.Ready):
         """Tell server that player is ready to guess/explain"""
         if self.state != HatGame.ST_PLAY:
             raise Exception(f"Invalid command 'ready' for game in state '{self.state}'")
@@ -169,6 +169,6 @@ class HatGame:
             gss.guess()
             log.debug(f'Explanation started: explain {exp.name} guessing {gss.name}')
 
-            msg = StartMsg()
-            await self.broadcast(msg)
+            m = message.Start()
+            await self.broadcast(m)
             await self.next_word()

@@ -2,7 +2,7 @@ import json
 import sys
 
 
-class Msg(object):
+class Message(object):
     """API Base Message, abstract class"""
 
     def __str__(self):
@@ -11,7 +11,8 @@ class Msg(object):
     def data(self):
         pass
 
-class ClientMsg(Msg):
+
+class ClientMessage(Message):
     pass
 
     def __init__(self, data):
@@ -25,19 +26,21 @@ class ClientMsg(Msg):
         if 'cmd' not in data:
             raise ValueError(f'cmd is not specified')
         cmd = data['cmd']
-        mcls = getattr(sys.modules[__name__], cmd.title()+'Msg')
+        mcls = getattr(sys.modules[__name__], cmd.title())
 
-        if not issubclass(cls, ClientMsg):
+        if not issubclass(cls, ClientMessage):
             raise ValueError(f"Unknown command '{cmd}'")
 
         return mcls(data)
 
-class NameMsg(ClientMsg):
+
+class Name(ClientMessage):
     def __init__(self, data):
         super().__init__(data)
         self.name = data['name']
 
-class WordsMsg(ClientMsg):
+
+class Words(ClientMessage):
     def __init__(self, data):
         super().__init__(data)
         if not isinstance(data['words'], list):
@@ -45,20 +48,22 @@ class WordsMsg(ClientMsg):
 
         self.words = data['words']
 
-class PlayMsg(ClientMsg):
+
+class Play(ClientMessage):
     def __init__(self, data):
         super().__init__(data)
 
 
-class ReadyMsg(ClientMsg):
+class Ready(ClientMessage):
     def __init__(self, data):
         super().__init__(data)
 
-class ServerMsg(Msg):
+
+class ServerMessage(Message):
     pass
 
 
-class ErrorMsg(ServerMsg):
+class Error(ServerMessage):
     def __init__(self, code=None, message=None):
         self.code = code
         self.message = message
@@ -71,7 +76,7 @@ class ErrorMsg(ServerMsg):
         }
 
 
-class GameMsg(ServerMsg):
+class Game(ServerMessage):
     def __init__(self, id=None, numwords=None, timer=None):
         self.id = id
         self.numwords = numwords
@@ -85,7 +90,8 @@ class GameMsg(ServerMsg):
             'id': self.id
         }
 
-class PrepareMsg(ServerMsg):
+
+class Prepare(ServerMessage):
     def __init__(self, players=None):
         self.players = players
 
@@ -95,7 +101,8 @@ class PrepareMsg(ServerMsg):
             'players': self.players
         }
 
-class WaitMsg(ServerMsg):
+
+class Wait(ServerMessage):
     def __init__(self):
         pass
 
@@ -104,7 +111,8 @@ class WaitMsg(ServerMsg):
             'cmd': 'wait'
         }
 
-class TourMsg(ServerMsg):
+
+class Tour(ServerMessage):
     def __init__(self, tour):
         self.tour = tour
 
@@ -115,7 +123,7 @@ class TourMsg(ServerMsg):
         }
 
 
-class TurnMsg(ServerMsg):
+class Turn(ServerMessage):
     def __init__(self, turn=None, explain=None, guess=None):
         self.turn = turn
         self.explain = explain
@@ -129,7 +137,8 @@ class TurnMsg(ServerMsg):
             'guess': self.guess
         }
 
-class StartMsg(ServerMsg):
+
+class Start(ServerMessage):
     def __init__(self):
         pass
 
@@ -138,7 +147,8 @@ class StartMsg(ServerMsg):
             'cmd': 'start'
         }
 
-class NextMsg(ServerMsg):
+
+class Next(ServerMessage):
     def __init__(self, word=None):
         self.word = word
 
@@ -148,17 +158,18 @@ class NextMsg(ServerMsg):
             'word': self.word
         }
 
+
 if __name__ == '__main__':
     print('Server Messages:')
 
     server_messages = [
-        GameMsg(id="xxxx-id-here", numwords=10, timer=20),
-        PrepareMsg(players={"user1":5, "user2":0, "user3":6}),
-        WaitMsg(),
-        TourMsg(tour=1),
-        TurnMsg(turn=10, explain="user1", guess="user2"),
-        StartMsg(),
-        NextMsg(word="banana"),
+        Game(id="xxxx-id-here", numwords=10, timer=20),
+        Prepare(players={"user1": 5, "user2": 0, "user3": 6}),
+        Wait(),
+        Tour(tour=1),
+        Turn(turn=10, explain="user1", guess="user2"),
+        Start(),
+        Next(word="banana"),
     ]
 
     for msg in server_messages:
@@ -175,5 +186,5 @@ if __name__ == '__main__':
     ]
 
     for msgtext in client_messages:
-        msg = ClientMsg.msg(json.loads(msgtext))
+        msg = ClientMessage.msg(json.loads(msgtext))
         print(f'<< {type(msg).__name__} \t{msg}')

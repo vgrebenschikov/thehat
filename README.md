@@ -30,7 +30,7 @@ The Hat (Shlyapa) online game
 Running server for development 
 ```bash
 $ python app.py
-======== Running on http://0.0.0.0:8080 ========
+======== Running on http://0.0.0.0:8088 ========
 (Press CTRL+C to quit)
 [L:30]# DEBUG    [12-04-2020 01:06:14]  websocket new connection
 [L:38]# DEBUG    [12-04-2020 01:06:18]  websocket message received: 1: {"cmd": "name", "name": "vova"}
@@ -40,7 +40,7 @@ $ python app.py
 ```
 How to test WebSocket connection:
 ```bash
-$ websocat --exit-on-eof ws://127.0.0.1:8080/ws
+$ websocat --exit-on-eof ws://127.0.0.1:8088/ws
 {"cmd": "name", "name": "vova"}
 {"cmd": "game", "id": "7b5e87e5-39d4-481b-bac1-b4bc69e24fc0", "numwords": 6}
 {"cmd": "words", "words": [ "a1", "a2", "a3", "a4", "a5" ]}
@@ -59,4 +59,4 @@ $ cd ui
 $ yarn install
 $ yarn start
 ```
-(this will open a browser to http://localhost:3000 and connect to the backend running on localhost:8088 -- note this is not the default port! 8080 is used on my machine for work:)
+(this will open a browser to http://localhost:3000 and connect to the backend running on localhost:8088 

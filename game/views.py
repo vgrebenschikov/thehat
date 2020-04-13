@@ -1,8 +1,8 @@
 from aiohttp import web, WSMsgType
 from settings import log
-from .msg import (ClientMsg, ErrorMsg)
+from . import message
+
 import json
-from game.hat import HatGame
 
 
 class Login(web.View):
@@ -23,9 +23,9 @@ class Words(web.View):
 
 
 class WebSocket(web.View):
-    async def error(self, ws, code, message):
-        log.error(message)
-        await ws.send_json(ErrorMsg(code=code, message=message).data())
+    async def error(self, ws, code, msg):
+        log.error(msg)
+        await ws.send_json(message.Error(code=code, message=msg).data())
 
     async def get(self):
         log.debug('websocket new connection')
@@ -57,7 +57,7 @@ class WebSocket(web.View):
 
                 try:
                     log.debug(f'Received command {cmdtxt}')
-                    await cmd(ws, ClientMsg.msg(data))
+                    await cmd(ws, message.ClientMessage.msg(data))
                 except Exception as e:
                     log.exception(f"Exception caught while execution of '{cmdtxt}': {e}")
                     await self.error(ws, 104, f"Error executing command '{cmdtxt}': {e}")
