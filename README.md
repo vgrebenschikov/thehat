@@ -40,7 +40,7 @@ $ python app.py
 ```
 How to test WebSocket connection:
 ```bash
-$ websocat ws://127.0.0.1:8080/ws
+$ websocat --exit-on-eof ws://127.0.0.1:8080/ws
 {"cmd": "name", "name": "vova"}
 {"cmd": "game", "id": "7b5e87e5-39d4-481b-bac1-b4bc69e24fc0", "numwords": 6}
 {"cmd": "words", "words": [ "a1", "a2", "a3", "a4", "a5" ]}
