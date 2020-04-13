@@ -109,17 +109,16 @@ class HatGame:
         self.shlyapa = Shlyapa(config=cfg)
 
         self.state = HatGame.ST_PLAY
-        for p in self.players:
-            await self.tour(p.socket)
 
+        await self.tour()
         await self.next_move()
 
     async def wait(self, ws):
         log.debug('Wait for other players')
         await ws.send_json(WaitMsg().data())
 
-    async def tour(self, ws):
-        await ws.send_json(TourMsg(tour=self.shlyapa.get_cur_tour()).data())
+    async def tour(self):
+        await self.send_all(TourMsg(tour=self.shlyapa.get_cur_tour()))
 
     async def next_move(self):
         s = self.shlyapa
@@ -134,6 +133,9 @@ class HatGame:
         await self.send_all(msg)
 
     async def ready(self, ws, msg : ReadyMsg):
+        if self.state != HatGame.ST_PLAY:
+            raise Exception(f"Invalid command 'ready' for game in state '{self.state}")
+
         exp = self.cur_pair.explaining
         gss = self.cur_pair.guessing
 
