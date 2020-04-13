@@ -107,7 +107,7 @@ class HatGame:
             raise ValueError(f"Can't start game in '{self.state}' state")
 
         states = [p.state for p in self.players]
-        if states.count(Player.ST_READY) != len(states):
+        if states.count(Player.ST_WAIT) != len(states):
             await self.wait(ws)
             return
 
@@ -139,13 +139,17 @@ class HatGame:
         if explained_words != None:  # non-first pair
             s.move_shlyapa(pair_explained_words=explained_words)
 
+        if self.cur_pair:
+            self.cur_pair.explaining.wait()
+            self.cur_pair.guessing.wait()
+
         pair_idx = s.get_next_pair()
         exp = self.players[pair_idx.explaining]
         gss = self.players[pair_idx.guessing]
         self.cur_pair = PlayerPair(explaining=exp, guessing=gss)
         self.cur_guessed = 0
-        exp.ready()
-        gss.ready()
+        exp.begin()
+        gss.begin()
 
         log.debug(f'Pair selected: explain={exp.name} guessing={gss.name}')
 
@@ -171,17 +175,17 @@ class HatGame:
         gss = self.cur_pair.guessing
 
         if self.sockets_map[id(ws)] == exp:
-            exp.prepare_explain()
+            exp.ready()
         elif self.sockets_map[id(ws)] == gss:
-            gss.prepare_guess()
+            gss.ready()
         else:
             raise Exception('Wrong player sent ready command')
 
         log.debug(f'Pair state: explain({exp.name})={exp.state} guessing({gss.name})={gss.state}')
 
-        if exp.state == Player.ST_PREPARE_EXPLAIN and gss.state == Player.ST_PREPARE_GUESS:
-            exp.explain()
-            gss.guess()
+        if exp.state == Player.ST_READY and gss.state == Player.ST_READY:
+            exp.play()
+            gss.play()
             log.debug(f'Explanation started: explain {exp.name} guessing {gss.name}')
 
             self.timer = Timer(self.turn_timer, self.expired)
@@ -231,7 +235,7 @@ class HatGame:
 
             await self.broadcast(message.Stop())
 
-            self.cur_pair.explaining.last_answer()
+            self.cur_pair.explaining.lastanswer()
             self.cur_pair.guessing.finish()
         except Exception as e:
             log.error(f'Exception while process timer: {e}')
