@@ -8,8 +8,8 @@ from game.hat import HatGame
 class Login(web.View):
     async def get(self):
         ret = {
-            'num_players': len(self.request.app.game.players),
-            'players': list(self.request.app.game.players.keys())
+            'num_players': len(self.request.app.game.players_map),
+            'players': list(self.request.app.game.players_map.keys())
         }
         return web.Response(
             content_type="application/json",

@@ -15,8 +15,8 @@ class Player:
     ST_PREPARE_GUESS = 'prepguess'
     ST_FINISH = 'finish'
 
-    def __init__(self, name=None, ws=None):
-        self.socket = ws
+    def __init__(self, name=None, socket=None):
+        self.socket = socket
         self.state = Player.ST_WORDS if name else Player.ST_UNKNOWN
         self.name = name
 

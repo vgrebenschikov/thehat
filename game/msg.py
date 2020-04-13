@@ -151,38 +151,29 @@ class NextMsg(ServerMsg):
 if __name__ == '__main__':
     print('Server Messages:')
 
-    m = GameMsg(id="xxxx-id-here", numwords=10, timer=20)
-    print(f'GameMsg \t{m}')
+    server_messages = [
+        GameMsg(id="xxxx-id-here", numwords=10, timer=20),
+        PrepareMsg(players=["user1", "user2", "user3"]),
+        WaitMsg(),
+        TourMsg(tour=1),
+        TurnMsg(turn=10, explain="user1", guess="user2"),
+        StartMsg(),
+        NextMsg(word="banana"),
+    ]
 
-    m = PrepareMsg(players=["user1", "user2", "user3"])
-    print(f'PrepareMsg \t{m}')
-
-    m = WaitMsg()
-    print(f'WaitMsg \t{m}')
-
-    m = TourMsg(tour=1)
-    print(f'TourMsg \t{m}')
-
-    m = TurnMsg(turn=10, explain="user1", guess="user2")
-    print(f'TurnMsg \t{m}')
-
-    m = StartMsg()
-    print(f'StartMsg \t{m}')
-
-    m = NextMsg(word="banana")
-    print(f'NextMsg \t{m}')
+    for msg in server_messages:
+        print(f'>> {type(msg).__name__} \t{msg}')
 
     print()
     print('Client Messages:')
 
-    m = ClientMsg.msg(json.loads('{"cmd": "name", "name": "vova"}'))
-    print(f'NameMsg \t{m}')
+    client_messages = [
+        '{"cmd": "name", "name": "vova"}',
+        '{"cmd": "words", "words": ["apple", "orange", "banana"]}',
+        '{"cmd": "play"}',
+        '{"cmd": "ready"}',
+    ]
 
-    m = ClientMsg.msg(json.loads('{"cmd": "words", "words": ["apple", "orange", "banana"]}'))
-    print(f'WordsMsg \t{m}')
-
-    m = ClientMsg.msg(json.loads('{"cmd": "play"}'))
-    print(f'PlayMsg \t{m}')
-
-    m = ClientMsg.msg(json.loads('{"cmd": "ready"}'))
-    print(f'ReadyMsg \t{m}')
+    for msgtext in client_messages:
+        msg = ClientMsg.msg(json.loads(msgtext))
+        print(f'<< {type(msg).__name__} \t{msg}')
