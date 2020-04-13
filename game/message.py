@@ -59,6 +59,12 @@ class Ready(ClientMessage):
         super().__init__(data)
 
 
+class Guessed(ClientMessage):
+    def __init__(self, data):
+        super().__init__(data)
+        self.guessed = data['guessed']
+
+
 class ServerMessage(Message):
     pass
 
@@ -159,6 +165,37 @@ class Next(ServerMessage):
         }
 
 
+class Explained(ServerMessage):
+    def __init__(self, word=None):
+        self.word = word
+
+    def data(self):
+        return {
+            'cmd': 'explained',
+            'word': self.word
+        }
+
+
+class Missed(ServerMessage):
+    def __init__(self):
+        pass
+
+    def data(self):
+        return {
+            'cmd': 'missed'
+        }
+
+
+class Stop(ServerMessage):
+    def __init__(self):
+        pass
+
+    def data(self):
+        return {
+            'cmd': 'stop'
+        }
+
+
 if __name__ == '__main__':
     print('Server Messages:')
 
@@ -170,6 +207,8 @@ if __name__ == '__main__':
         Turn(turn=10, explain="user1", guess="user2"),
         Start(),
         Next(word="banana"),
+        Explained(word="banana"),
+        Missed(),
     ]
 
     for msg in server_messages:
@@ -183,6 +222,7 @@ if __name__ == '__main__':
         '{"cmd": "words", "words": ["apple", "orange", "banana"]}',
         '{"cmd": "play"}',
         '{"cmd": "ready"}',
+        '{"cmd": "guessed", "guessed": true }',
     ]
 
     for msgtext in client_messages:

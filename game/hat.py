@@ -1,6 +1,7 @@
 from settings import log
 from . import message
 from .player import Player
+from .timer import Timer
 from shlyapa import Shlyapa, Config
 
 import uuid
@@ -25,6 +26,8 @@ class HatGame:
     turn_timer: int
     cur_pair: Optional[PlayerPair]
     shlyapa: Optional[Shlyapa]
+    cur_guessed: Optional[int]
+    timer: Optional[Timer]
 
     def __init__(self):
         self.players = []
@@ -39,6 +42,8 @@ class HatGame:
         self.turn_timer = 20  # in seconds
         self.cur_pair = None
         self.cur_word = None
+        self.cur_guessed = None
+        self.timer = None
 
     def add_player(self, name=None, socket=None) -> bool:
         """Add new player to game"""
@@ -102,7 +107,7 @@ class HatGame:
             raise ValueError(f"Can't start game in '{self.state}' state")
 
         states = [p.state for p in self.players]
-        if states.count(Player.ST_READY) != len(states):
+        if states.count(Player.ST_WAIT) != len(states):
             await self.wait(ws)
             return
 
@@ -127,18 +132,32 @@ class HatGame:
         self.tour_words = self.all_words
         await self.broadcast(message.Tour(tour=self.shlyapa.get_cur_tour()))
 
-    async def next_move(self):
+    async def next_move(self, explained_words=None):
         """Do next move, called on game start or after move finished"""
         s = self.shlyapa
+
+        if explained_words != None:  # non-first pair
+            s.move_shlyapa(pair_explained_words=explained_words)
+
+        if self.cur_pair:
+            self.cur_pair.explaining.wait()
+            self.cur_pair.guessing.wait()
+
         pair_idx = s.get_next_pair()
         exp = self.players[pair_idx.explaining]
         gss = self.players[pair_idx.guessing]
         self.cur_pair = PlayerPair(explaining=exp, guessing=gss)
+        self.cur_guessed = 0
+        exp.begin()
+        gss.begin()
 
         log.debug(f'Pair selected: explain={exp.name} guessing={gss.name}')
 
         m = message.Turn(turn=s.get_cur_turn(), explain=exp.name, guess=gss.name)
         await self.broadcast(m)
+
+    def has_words(self):
+        return len(self.tour_words) > 0
 
     async def next_word(self):
         """Select next word for pair"""
@@ -156,19 +175,70 @@ class HatGame:
         gss = self.cur_pair.guessing
 
         if self.sockets_map[id(ws)] == exp:
-            exp.prepare_explain()
+            exp.ready()
         elif self.sockets_map[id(ws)] == gss:
-            gss.prepare_guess()
+            gss.ready()
         else:
             raise Exception('Wrong player sent ready command')
 
         log.debug(f'Pair state: explain({exp.name})={exp.state} guessing({gss.name})={gss.state}')
 
-        if exp.state == Player.ST_PREPARE_EXPLAIN and gss.state == Player.ST_PREPARE_GUESS:
-            exp.explain()
-            gss.guess()
+        if exp.state == Player.ST_READY and gss.state == Player.ST_READY:
+            exp.play()
+            gss.play()
             log.debug(f'Explanation started: explain {exp.name} guessing {gss.name}')
+
+            self.timer = Timer(self.turn_timer, self.expired)
 
             m = message.Start()
             await self.broadcast(m)
             await self.next_word()
+
+    async def guessed(self, ws, msg: message.Guessed):
+        """Guessing User tell us of he guessed right"""
+        sent_by = self.sockets_map[id(ws)]
+        if sent_by != self.cur_pair.explaining:
+            raise ValueError(
+                f'Only explaining player can send guessed command,'
+                f' but sent by {sent_by.name} in {sent_by.state} state')
+
+        if msg.guessed:
+            self.cur_guessed += 1
+            m = message.Explained(word=self.cur_word)
+        else:
+            m = message.Missed()
+
+        await self.broadcast(m)
+
+        if self.cur_pair.explaining.state == Player.ST_LAST_ANSWER:
+            """Answer after timer exhausted"""
+            self.cur_pair.explaining.finish()
+            await self.next_move(explained_words=self.cur_guessed)
+
+            return
+
+        if not self.has_words():
+            """End of turn"""
+            if self.timer:
+                self.timer.cancel()
+
+            log.debug('No more words')
+            # TODO
+            return
+
+        await self.next_word()
+
+    async def expired(self):
+        """Guessing time expired"""
+        self.timer = None
+
+        try:
+            log.debug('Turn timer expired, stop turn')
+
+            await self.broadcast(message.Stop())
+
+            self.cur_pair.explaining.lastanswer()
+            self.cur_pair.guessing.finish()
+        except Exception as e:
+            log.error(f'Exception while process timer: {e}')
+            log.exception()
