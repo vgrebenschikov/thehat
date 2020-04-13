@@ -15,37 +15,13 @@ import React from 'react';
 import MobxReactRouter from "mobx-react-router";
 import RuLette from "./rulette";
 import {action, observable} from "mobx";
+import {DialogStore} from "./common/DialogStore";
 
 const styles = (theme: Theme) => ({
     button: {
         margin: theme.spacing(2),
     },
 });
-
-class DialogStore {
-    @observable isOpen: boolean = false;
-    callback: () => void;
-
-    constructor(callback: () => void) {
-        this.callback = callback;
-    }
-
-    @action.bound
-    open() {
-        this.isOpen = true;
-    }
-
-    @action.bound
-    close() {
-        this.isOpen = false;
-    }
-
-    @action.bound
-    submit() {
-        this.isOpen = false;
-        this.callback();
-    }
-}
 
 class gameNameStore extends DialogStore {
     @observable name: string = '';
@@ -111,16 +87,15 @@ class NoGame extends React.Component<NoGameProps, any> {
                         <DialogTitle>
                             Enter the game's name
                         </DialogTitle>
-                        <form onSubmit={this.dialogStore.submit}>
+                        <form onSubmit={(ev) => {ev.preventDefault(); this.dialogStore.submit()}}>
                             <DialogContent>
                                 <Input type="text"
                                        onChange={(ev) => this.dialogStore.setName(ev.target.value)}
-                                       onSubmit={this.dialogStore.submit}
                                        autoFocus />
                             </DialogContent>
                             <DialogActions>
                                 <Button onClick={this.dialogStore.close}>Cancel</Button>
-                                <Button type="submit" variant="contained" color="primary" onClick={this.dialogStore.submit}>Join</Button>
+                                <Button type="submit">Join</Button>
                             </DialogActions>
                         </form>
                     </Dialog>

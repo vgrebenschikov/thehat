@@ -1,4 +1,4 @@
-import {Container, createStyles, Drawer, Paper, Theme, Typography, withStyles} from "@material-ui/core";
+import {Container, createStyles, Drawer, Paper, styled, Theme, Typography, withStyles} from "@material-ui/core";
 import {inject, observer} from 'mobx-react';
 import React from "react";
 import DataStore from "store/DataStore";
@@ -6,11 +6,12 @@ import UIStore from "store/UIStore";
 import UnstartedDrawer from "unstarted/UnstartedDrawer";
 import InGameDrawer from "ingame/InGameDrawer";
 import MobxReactRouter from "mobx-react-router";
-import Unstarted from "./unstarted/Unstarted";
+import WordsEntry from "unstarted/WordsEntry";
+import {GameState, PlayerState} from "./store/types";
 
 const SideDrawer = inject('datastore')(observer((props: {datastore?: DataStore}) => {
-    const isStarted = props.datastore?.game?.isStarted();
-    return isStarted ? <InGameDrawer/> : <UnstartedDrawer/>;
+    const isConfig = props.datastore?.game?.gameState === GameState.ST_CONFIG;
+    return isConfig ? <UnstartedDrawer/> : <InGameDrawer/>;
 }));
 
 const styles = (theme: Theme) => createStyles({
@@ -25,6 +26,40 @@ const styles = (theme: Theme) => createStyles({
     },
 });
 
+const StatusSurface = styled(Paper)({
+    padding: '8px',
+    marginBottom: '16px',
+});
+
+const StatusBar = inject('datastore')(observer((props: {datastore?: DataStore}) => {
+    let status = '';
+    const {game} = props.datastore!;
+    switch (game?.gameState) {
+        case GameState.ST_CONFIG:
+            status = `Добавить слова в шляпу (${game?.gameNumWords} шт)`;
+            break;
+        case GameState.ST_PLAY:
+            status = `Играем!`;
+            break;
+        case GameState.ST_TURNSTART:
+            status = `Приготовиться!`;
+            break;
+        case GameState.ST_TURN:
+            status = `Отгадываем!`;
+            break;
+        case GameState.ST_AFTERTURN:
+            status = `Время вышло`;
+            break;
+        case GameState.ST_FINISH:
+            status = `Игра окончена`;
+            break;
+
+    }
+    return <StatusSurface>
+        <Typography variant="h6">{status}</Typography>
+    </StatusSurface>;
+}));
+
 interface MainAppProps {
     datastore?: DataStore;
     uistore?: UIStore;
@@ -32,16 +67,6 @@ interface MainAppProps {
     match: any;
     classes: any;
 }
-
-const StatusBar = withStyles(styles)(inject('datastore')(observer((props: {datastore?: DataStore, classes: any}) => {
-    return <Paper className={props.classes.statusBar}>
-        <Typography variant="h6">
-            {props.datastore?.game?.isStarted()
-              ? "Играем!"
-              : "Добавить слова в шляпу"}
-        </Typography>
-    </Paper>;
-})));
 
 @inject('datastore','uistore','routing')
 @observer
@@ -51,20 +76,12 @@ class MainApp extends React.Component<MainAppProps, {}> {
         props.datastore?.joinGame(props.match.params.gameId);
     }
 
-    leaveGame = async () => {
-        await this.props.datastore?.leaveGame();
-        this.props.routing!.push('/');
-    };
-
     render() {
         const { datastore, uistore, classes } = this.props;
-        if (!datastore!.game?.data) {
-            return null;
-        }
         return <>
             <StatusBar/>
             <Container>
-                {datastore!.game?.isStarted() ? null : <Unstarted/>}
+                {datastore!.game?.myState === PlayerState.ST_WORDS && <WordsEntry/>}
                 <Drawer classes={{paper:classes.drawer}} anchor="left" open={uistore!.drawerOpen} onClose={()=>uistore!.setDrawerOpen(false)}>
                     <SideDrawer/>
                 </Drawer>

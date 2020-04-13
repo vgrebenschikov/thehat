@@ -1,77 +1,157 @@
-import * as firebase from "firebase/app";
-import "firebase/firestore";
-import { observable, action } from 'mobx';
-import { User } from 'firebase';
-import { runInAction } from 'mobx';
+import {action, observable} from 'mobx';
+import {User} from 'firebase';
+import WebSocketConnection from "./WebSocketConnection";
+import {GameState, PlayerState} from "./types";
 
 export interface Player {
     name: string;
     uid: string;
 }
 
-export interface DBData {
-    users: Player[];
-    ready: { [uid: string]: boolean };
-    started: boolean | undefined;
-
-    words: string[];
-}
-
 export default class Game {
-    @observable name: string;
-    @observable data: DBData | null = null;
+    @observable id: string;
+    @observable connected: boolean = false;
+    @observable serverGameId: string | null = null;
 
-    db: firebase.firestore.Firestore;
-    doc: firebase.firestore.DocumentReference | null = null;
-    unsubscribe: (() => void) | null = null;
-    user: Player | null = null;
+    @observable gameState: GameState = GameState.ST_CONFIG;
+    @observable players: Player[] = [];
+    @observable myState: PlayerState = PlayerState.ST_UNKNOWN;
+    @observable gameNumWords: number | null = null;
+    @observable tourNumber: number | null = null;
+    @observable turnNumber: number | null = null;
+    @observable explainer: string | null = null;
+    @observable guesser: string | null = null;
+    @observable timerStart: Date | null = null;
+    @observable currentWord: string | null = null;
+    @observable turnWords: string[] = [];
 
-    constructor(name: string, user: User) {
-        this.db = firebase.firestore();
-        this.name = name;
-        this.loadGame(this.name, user);
+    private ws: WebSocketConnection;
+    private readonly commands: {[k: string]: (data: any) => void};
+
+    user: Player;
+
+    constructor(name: string, user: User, ws: WebSocketConnection) {
+        this.commands = {
+            game: this.cmdGame,
+            prepare: this.cmdPrepare,
+            wait: this.cmdWait,
+            tour: this.cmdTour,
+            turn: this.cmdTurn,
+            start: this.cmdStart,
+            next: this.cmdNext,
+            explained: this.cmdExplained,
+            missed: this.cmdMissed,
+            stop: this.cmdStop,
+            finish: this.cmdFinish,
+            error: this.cmdError,
+        };
+        this.id = name;
+        this.ws = ws;
+        this.ws.subscribeReceiver((data: any) => {this.commands[data?.cmd]?.(data);});
+        this.user = { name: user.displayName || 'Unknown', uid: user.uid };
+        this.connect();
     }
 
-    loadGame = (name: string, user: User) => {
-        name = name.toLowerCase();
-        this.doc = this.db.collection('docs').doc(name);
-        this.unsubscribe = this.doc.onSnapshot(action((doc: any) => {
-            this.data = doc.data();
-            this.name = name;
-            console.log('got update:', doc.data())
-        }));
-        this.user = { name: user.displayName || '', uid: user.uid };
-        this.doc.set({
-            users: firebase.firestore.FieldValue.arrayUnion(this.user),
-            ready: { [this.user.uid]: false }
-        }, { merge: true });
-    };
-
-    leaveGame = async () => {
-        await this.doc?.update({
-            users: firebase.firestore.FieldValue.arrayRemove(this.user)
-        });
-        this.unsubscribe?.();
-        runInAction(() => {
-            this.data = null;
-            this.name = '';
+    connect = () => {
+        this.ws.send({
+            cmd: 'name',
+            name: this.user.uid,
         });
     };
 
-    addWord = async (word: string) => {
-        await this.doc?.update({
-            words: firebase.firestore.FieldValue.arrayUnion(word.toLowerCase())
+    @action
+    sendWords(words: string[]) {
+        this.ws.send({
+            cmd: 'words',
+            words: words,
         });
-    };
-
-    removeWord = async (word: string) => {
-        await this.doc?.update({
-            words: firebase.firestore.FieldValue.arrayRemove(word.toLowerCase())
-        });
-    };
-
-    isStarted = (): boolean => {
-        return !!(this.data?.started);
+        this.myState = PlayerState.ST_READY;
     }
 
+    sendPlay() {
+        this.ws.send({
+            cmd: 'play'
+        });
+    }
+
+
+    @action.bound
+    cmdGame (data: any) {
+        this.serverGameId = data.id || null;
+        this.gameNumWords = data.numwords || null;
+        this.myState = PlayerState.ST_WORDS;
+    };
+
+    @action.bound
+    cmdPrepare (data: any) {
+        this.players = data.players.map((p: string) => ({name: p, uid: ''}));
+    };
+
+    @action.bound
+    cmdWait (data: any) {
+        this.gameState = GameState.ST_CONFIG;
+    };
+
+    @action.bound
+    cmdTour (data: any) {
+        this.tourNumber = data.tour || null;
+    };
+
+    @action.bound
+    cmdTurn (data: any) {
+        this.turnNumber = data.turn || null;
+        this.explainer = data.explain || null;
+        this.guesser = data.guess || null;
+        if (this.explainer === this.user?.name) {
+            this.myState = PlayerState.ST_PREPARE_EXPLAIN;
+        } else if (this.guesser === this.user?.name) {
+            this.myState = PlayerState.ST_PREPARE_GUESS;
+        } else {
+            this.myState = PlayerState.ST_READY;
+        }
+        this.gameState = GameState.ST_TURNSTART;
+    };
+
+    @action.bound
+    cmdStart (data: any) {
+        this.gameState = GameState.ST_TURN;
+        if (this.myState === PlayerState.ST_PREPARE_GUESS) {
+            this.myState = PlayerState.ST_GUESS;
+        }
+        if (this.myState === PlayerState.ST_PREPARE_EXPLAIN) {
+            this.myState = PlayerState.ST_EXPLAIN;
+        }
+        this.timerStart = new Date();
+        this.turnWords = [];
+    };
+
+    @action.bound
+    cmdNext (data: any) {
+        this.currentWord = data.word;
+    };
+
+    @action.bound
+    cmdExplained (data: any) {
+        this.turnWords.push(data.word)
+    };
+
+    @action.bound
+    cmdMissed (data: any) {
+
+    };
+
+    @action.bound
+    cmdStop (data: any) {
+        this.gameState = GameState.ST_AFTERTURN;
+    };
+
+    @action.bound
+    cmdFinish (data: any) {
+        this.gameState = GameState.ST_FINISH;
+    };
+
+    @action.bound
+    cmdError (data: any) {
+
+    };
 }

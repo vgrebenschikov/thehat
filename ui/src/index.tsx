@@ -8,6 +8,7 @@ import {RouterStore, syncHistoryWithStore} from "mobx-react-router";
 import {createBrowserHistory} from "history";
 import {Provider} from "mobx-react";
 import {Router} from "react-router";
+import {createMuiTheme, ThemeProvider} from "@material-ui/core";
 
 const browserHistory = createBrowserHistory({
   basename: '/',
@@ -15,13 +16,17 @@ const browserHistory = createBrowserHistory({
 const routingStore = new RouterStore();
 const history = syncHistoryWithStore(browserHistory, routingStore);
 
+const theme = createMuiTheme();
+
 ReactDOM.render(
   <React.StrictMode>
-    <Provider routing={routingStore}>
-      <Router history={history}>
-        <App />
-      </Router>
-    </Provider>
+    <ThemeProvider theme={theme}>
+      <Provider routing={routingStore}>
+        <Router history={history}>
+          <App />
+        </Router>
+      </Provider>
+    </ThemeProvider>
   </React.StrictMode>,
   document.getElementById('root')
 );
