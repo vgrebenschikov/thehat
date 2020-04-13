@@ -219,7 +219,9 @@ class HatGame:
 
         if not self.has_words():
             """End of turn"""
-            self.timer.cancel()
+            if self.timer:
+                self.timer.cancel()
+
             log.debug('No more words')
             # TODO
             return
