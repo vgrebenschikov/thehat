@@ -12,7 +12,7 @@ PlayerDict = Dict[str, Player]
 
 
 class HatGame:
-    ST_CONFIG = 'config'
+    ST_SETUP = 'setup'
     ST_PLAY = 'play'
     ST_FINISH = 'finish'
 
@@ -31,7 +31,7 @@ class HatGame:
         self.all_words = []
         self.tour_words = []
         self.id = str(uuid.uuid4())
-        self.state = HatGame.ST_CONFIG
+        self.state = HatGame.ST_SETUP
         self.shlyapa = None
         self.num_words = 6
         self.turn_timer = 20 # seconds
@@ -39,6 +39,7 @@ class HatGame:
         self.cur_word = None
 
     def add_player(self, name=None, socket=None) -> bool:
+        """Add new player to game"""
         if name in self.players_map:
             p = self.players_map[name]
             del self.sockets_map[id(p.socket)]
@@ -52,11 +53,13 @@ class HatGame:
         self.players_map[name] = p
         return True
 
-    async def send_all(self, msg):
+    async def broadcast(self, msg):
+        """Broadcast message to all players"""
         for p in self.players:
             await p.socket.send_json(msg.data())
 
     async def name(self, ws, msg: NameMsg):
+        """Set my name - (re)login procedure on socket"""
         name = msg.name
         log.debug(f'user {name} logged in as {id(ws)}')
 
@@ -68,6 +71,7 @@ class HatGame:
         await self.game(ws)
 
     async def game(self, ws):
+        """Notify just known Player about Game layout"""
         await ws.send_json(
             GameMsg(
                 id=self.id,
@@ -76,20 +80,23 @@ class HatGame:
             ).data())
 
     async def words(self, ws, msg : WordsMsg):
+        """Player sends it's words to server"""
         words = msg.words
         p = self.sockets_map[id(ws)]
         p.set_words(words)
         log.debug(f'user {p.name} sent words: {words}')
 
         msg = PrepareMsg(players=[p.name for p in self.players])
-        await self.send_all(msg)
+        await self.broadcast(msg)
 
     async def prepare(self, ws):
+        """Notify All Players about changed set of players"""
         players = [p.name for p in self.players]
         await ws.send_json(PrepareMsg(players=players).data())
 
     async def play(self, ws, msg : PlayMsg):
-        if self.state != HatGame.ST_CONFIG:
+        """Move Game from ST_SETUP phase to ST_PLAY - start game"""
+        if self.state != HatGame.ST_SETUP:
             raise ValueError(f"Can't start game in '{self.state}' state")
 
         states = [p.state for p in self.players]
@@ -114,13 +121,16 @@ class HatGame:
         await self.next_move()
 
     async def wait(self, ws):
+        """Response to the player on attempt to start game with not all players ready"""
         log.debug('Wait for other players')
         await ws.send_json(WaitMsg().data())
 
     async def tour(self):
-        await self.send_all(TourMsg(tour=self.shlyapa.get_cur_tour()))
+        """Notify All Players about tour start, happens at begin of each tour"""
+        await self.broadcast(TourMsg(tour=self.shlyapa.get_cur_tour()))
 
     async def next_move(self):
+        """Do next move, called on game start or after move finished"""
         s = self.shlyapa
         pair_idx = s.get_next_pair()
         exp = self.players[pair_idx.explaining]
@@ -130,11 +140,12 @@ class HatGame:
         log.debug(f'Pair selected: explain={exp.name} guessing={gss.name}')
 
         msg = TurnMsg(turn=s.get_cur_turn(), explain=exp.name, guess=gss.name)
-        await self.send_all(msg)
+        await self.broadcast(msg)
 
     async def ready(self, ws, msg : ReadyMsg):
+        """Tell server that player is ready to guess/explain"""
         if self.state != HatGame.ST_PLAY:
-            raise Exception(f"Invalid command 'ready' for game in state '{self.state}")
+            raise Exception(f"Invalid command 'ready' for game in state '{self.state}'")
 
         exp = self.cur_pair.explaining
         gss = self.cur_pair.guessing
@@ -154,4 +165,4 @@ class HatGame:
             log.debug(f'Explanation started: explain {exp.name} guessing {gss.name}')
 
             msg = StartMsg()
-            await self.send_all(msg)
+            await self.broadcast(msg)
