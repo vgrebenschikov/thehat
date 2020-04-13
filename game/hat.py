@@ -2,7 +2,9 @@ from settings import log
 from .msg import *
 from .player import Player
 from shlyapa import Shlyapa, Config
+
 import uuid
+import random
 from collections import namedtuple
 from typing import (List, Dict, Optional)
 
@@ -104,17 +106,12 @@ class HatGame:
             await self.wait(ws)
             return
 
+        self.all_words = [w for p in self.players for w in p.words]
         cfg = Config(
-            number_players=len(self.players_map),
-            number_words=sum([len(p.words) for p in self.players]))
-
-        self.all_words = []
-        for p in self.players:
-            self.all_words.extend(p.words)
-        self.tour_words = self.all_words
+            number_players=len(self.players),
+            number_words=len(self.all_words))
 
         self.shlyapa = Shlyapa(config=cfg)
-
         self.state = HatGame.ST_PLAY
 
         await self.tour()
@@ -127,6 +124,7 @@ class HatGame:
 
     async def tour(self):
         """Notify All Players about tour start, happens at begin of each tour"""
+        self.tour_words = self.all_words
         await self.broadcast(TourMsg(tour=self.shlyapa.get_cur_tour()))
 
     async def next_move(self):
@@ -141,6 +139,13 @@ class HatGame:
 
         msg = TurnMsg(turn=s.get_cur_turn(), explain=exp.name, guess=gss.name)
         await self.broadcast(msg)
+
+    async def next_word(self):
+        """Select next word for pair"""
+        self.cur_word = self.tour_words.pop(random.randint(0,len(self.tour_words)-1))
+
+        msg = NextMsg(word=self.cur_word)
+        await self.cur_pair.explaining.socket.send_json(msg.data())
 
     async def ready(self, ws, msg : ReadyMsg):
         """Tell server that player is ready to guess/explain"""
@@ -166,3 +171,4 @@ class HatGame:
 
             msg = StartMsg()
             await self.broadcast(msg)
+            await self.next_word()
