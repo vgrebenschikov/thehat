@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 from aiohttp import web
 
+import settings
 from game.views import Login, Words, WebSocket
 from game.hat import HatGame
 
@@ -28,4 +29,4 @@ app.add_routes((
 ))
 
 if __name__ == '__main__':
-    web.run_app(app)
+    web.run_app(app, host=settings.SITE_HOST, port=settings.SITE_PORT)
