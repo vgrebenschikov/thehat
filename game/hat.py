@@ -38,17 +38,18 @@ class HatGame:
         self.cur_pair = None
         self.cur_word = None
 
-    def add_player(self, p) -> bool:
-        if p.name in self.players_map:
-            op = self.players_map[p.name]
-            del self.sockets_map[id(op.socket)]
-            self.sockets_map[id(p.socket)] = op
-            self.players_map[p.name].set_socket(p.socket)
+    def add_player(self, name=None, socket=None) -> bool:
+        if name in self.players_map:
+            p = self.players_map[name]
+            del self.sockets_map[id(p.socket)]
+            self.sockets_map[id(socket)] = p
+            self.players_map[name].set_socket(socket)
             return False
 
+        p = Player(name=name, socket=socket)
         self.players.append(p)
-        self.sockets_map[id(p.socket)] = p
-        self.players_map[p.name] = p
+        self.sockets_map[id(socket)] = p
+        self.players_map[name] = p
         return True
 
     async def send_all(self, msg):
@@ -59,7 +60,7 @@ class HatGame:
         name = msg.name
         log.debug(f'user {name} logged in as {id(ws)}')
 
-        if self.add_player(Player(name=name, socket=ws)):
+        if self.add_player(name=name, socket=ws):
             log.info(f'Player {name}({id(ws)}) was added to game')
         else:
             log.info(f'Player {name}({id(ws)}) already in list, re-connect user')
