@@ -12,10 +12,10 @@ class Player:
     ST_UNKNOWN = 'unknown'         # Just connected - unknown
     ST_WORDS = 'words'             # Waiting for words from player
     ST_WAIT = 'wait'               # Waiting for his move
-    ST_BEGIN = 'begin'             # Begin of turn
-    ST_READY = 'ready'             # Ready to start game
-    ST_PLAY = 'play'               # Playing
-    ST_LAST_ANSWER = 'lastanswer'  # Waiting for last explanation results
+    ST_BEGIN = 'begin'             # Begin of turn, player selected in pair
+    ST_READY = 'ready'             # Player ready to start turn
+    ST_PLAY = 'play'               # Playing (timer runs)
+    ST_LAST_ANSWER = 'lastanswer'  # Waiting for last explanation results (time is out)
     ST_FINISH = 'finish'           # Finishing turn
 
     def __init__(self, name=None, socket=None):
