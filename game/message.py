@@ -196,6 +196,16 @@ class Stop(ServerMessage):
         }
 
 
+class Finish(ServerMessage):
+    def __init__(self, results=None):
+        self.results = results
+
+    def data(self):
+        return {
+            'cmd': 'finish',
+            'results': self.results
+        }
+
 if __name__ == '__main__':
     print('Server Messages:')
 

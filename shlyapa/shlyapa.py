@@ -86,11 +86,14 @@ class Shlyapa:
     def get_cur_turn_in_round(self):
         return self.__cur_turn % self.config.number_players
 
+    def is_cur_tour_new(self):
+        return self.__tours[-1].is_end() and not self.is_end()
+
     def get_cur_tour(self):
         if len(self.__tours) == 0:
             return 0
         return_value = len(self.__tours) - 1
-        if self.__tours[-1].is_end() and not self.is_end():
+        if self.is_cur_tour_new():
             return_value += 1
         return return_value
 

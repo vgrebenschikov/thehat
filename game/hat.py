@@ -28,6 +28,9 @@ class HatGame:
     shlyapa: Optional[Shlyapa]
     cur_guessed: Optional[int]
     timer: Optional[Timer]
+    all_words: List[str]
+    tour_words: List[str]
+    missed_words: List[str]
 
     def __init__(self):
         self.players = []
@@ -35,6 +38,7 @@ class HatGame:
         self.sockets_map = {}
         self.all_words = []
         self.tour_words = []
+        self.missed_words = []
         self.id = str(uuid.uuid4())
         self.state = HatGame.ST_SETUP
         self.shlyapa = None
@@ -103,7 +107,7 @@ class HatGame:
 
     async def play(self, ws, msg: message.Play):
         """Move Game from ST_SETUP phase to ST_PLAY - start game"""
-        if self.state != HatGame.ST_SETUP:
+        if self.state not in (HatGame.ST_SETUP, HatGame.ST_FINISH):
             raise ValueError(f"Can't start game in '{self.state}' state")
 
         states = [p.state for p in self.players]
@@ -114,7 +118,8 @@ class HatGame:
         self.all_words = [w for p in self.players for w in p.words]
         cfg = Config(
             number_players=len(self.players),
-            number_words=len(self.all_words))
+            number_words=len(self.all_words),
+            is_last_turn_in_tour_divisible=False)
 
         self.shlyapa = Shlyapa(config=cfg)
         self.state = HatGame.ST_PLAY
@@ -129,19 +134,35 @@ class HatGame:
 
     async def tour(self):
         """Notify All Players about tour start, happens at begin of each tour"""
-        self.tour_words = self.all_words
+        assert len(self.missed_words) == 0
+        self.tour_words = self.all_words.copy()
         await self.broadcast(message.Tour(tour=self.shlyapa.get_cur_tour()))
+        log.debug(f"Next tour {self.shlyapa.get_cur_tour()}")
+        log.debug(f"Words #{len(self.tour_words)}: {self.tour_words}")
 
     async def next_move(self, explained_words=None):
         """Do next move, called on game start or after move finished"""
-        s = self.shlyapa
-
-        if explained_words != None:  # non-first pair
-            s.move_shlyapa(pair_explained_words=explained_words)
 
         if self.cur_pair:
             self.cur_pair.explaining.wait()
             self.cur_pair.guessing.wait()
+
+        s = self.shlyapa
+
+        if explained_words is not None:  # non-first pair
+            log.debug(f'Turn over, explained words={explained_words}')
+            s.move_shlyapa(pair_explained_words=explained_words)
+
+            if s.is_cur_tour_new():
+                await self.tour()
+
+            if s.is_end():
+                await self.broadcast(message.Finish(results={"message": "no results yet"}))
+                self.state = HatGame.ST_FINISH
+
+                return
+
+        log.debug(f'New turn #{s.get_cur_turn()}')
 
         pair_idx = s.get_next_pair()
         exp = self.players[pair_idx.explaining]
@@ -149,10 +170,16 @@ class HatGame:
         self.cur_pair = PlayerPair(explaining=exp, guessing=gss)
         self.cur_guessed = 0
 
-        log.debug(f'Pair selected: explain={exp.name} guessing={gss.name}')
-        exp.begin()
-        gss.begin()
+        # return to pool words which was miss-guessed by previous pair
+        if len(self.missed_words):
+            log.debug(f"Return #{len(self.missed_words)} words to hat")
+            self.tour_words.extend(self.missed_words)
+            self.missed_words = []
 
+        log.debug(f'In hat #{len(self.tour_words)}')
+        log.debug(f'Pair selected: explain={exp} guessing={gss}')
+        exp.begin()  # noqa
+        gss.begin()  # noqa
 
         m = message.Turn(turn=s.get_cur_turn(), explain=exp.name, guess=gss.name)
         await self.broadcast(m)
@@ -162,7 +189,9 @@ class HatGame:
 
     async def next_word(self):
         """Select next word for pair"""
-        self.cur_word = self.tour_words.pop(random.randint(0, len(self.tour_words) - 1))
+        if len(self.tour_words) == 0:
+            raise ValueError("No more words - unexpected")
+        self.cur_word = self.tour_words.pop(random.randrange(0, len(self.tour_words)))
 
         m = message.Next(word=self.cur_word)
         await self.cur_pair.explaining.socket.send_json(m.data())
@@ -209,6 +238,8 @@ class HatGame:
             m = message.Explained(word=self.cur_word)
         else:
             m = message.Missed()
+            self.missed_words.append(self.cur_word)
+            self.cur_word = None
 
         await self.broadcast(m)
 
@@ -224,8 +255,15 @@ class HatGame:
             if self.timer:
                 self.timer.cancel()
 
-            log.debug('No more words')
-            # TODO
+            log.debug('No more words - next turn')
+
+            await self.broadcast(message.Stop())
+
+            self.cur_pair.explaining.finish()
+            self.cur_pair.guessing.finish()
+
+            await self.next_move(explained_words=self.cur_guessed)
+
             return
 
         await self.next_word()
