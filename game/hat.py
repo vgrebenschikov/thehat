@@ -148,10 +148,11 @@ class HatGame:
         gss = self.players[pair_idx.guessing]
         self.cur_pair = PlayerPair(explaining=exp, guessing=gss)
         self.cur_guessed = 0
+
+        log.debug(f'Pair selected: explain={exp.name} guessing={gss.name}')
         exp.begin()
         gss.begin()
 
-        log.debug(f'Pair selected: explain={exp.name} guessing={gss.name}')
 
         m = message.Turn(turn=s.get_cur_turn(), explain=exp.name, guess=gss.name)
         await self.broadcast(m)
@@ -174,10 +175,9 @@ class HatGame:
         exp = self.cur_pair.explaining
         gss = self.cur_pair.guessing
 
-        if self.sockets_map[id(ws)] == exp:
-            exp.ready()
-        elif self.sockets_map[id(ws)] == gss:
-            gss.ready()
+        sent_by = self.sockets_map[id(ws)]
+        if sent_by in (exp, gss):
+            sent_by.ready()
         else:
             raise Exception('Wrong player sent ready command')
 
@@ -190,8 +190,7 @@ class HatGame:
 
             self.timer = Timer(self.turn_timer, self.expired)
 
-            m = message.Start()
-            await self.broadcast(m)
+            await self.broadcast(message.Start())
             await self.next_word()
 
     async def guessed(self, ws, msg: message.Guessed):
@@ -200,7 +199,10 @@ class HatGame:
         if sent_by != self.cur_pair.explaining:
             raise ValueError(
                 f'Only explaining player can send guessed command,'
-                f' but sent by {sent_by.name} in {sent_by.state} state')
+                f' but sent by {sent_by} in {sent_by.state} state')
+
+        if sent_by.state not in (Player.ST_PLAY, Player.ST_LAST_ANSWER):
+            raise ValueError(f"Player {sent_by} can't sent guessed command while not in play")
 
         if msg.guessed:
             self.cur_guessed += 1

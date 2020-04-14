@@ -66,4 +66,4 @@ class Player:
         self.wait()
 
     def __str__(self):
-        return f'{self.name} - {self.state} - {id(self.socket)}'
+        return self.name
