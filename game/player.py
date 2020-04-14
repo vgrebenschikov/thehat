@@ -34,6 +34,7 @@ class Player:
             ['lastanswer', Player.ST_PLAY,        Player.ST_LAST_ANSWER],  # noqa
             ['finish',     Player.ST_PLAY,        Player.ST_FINISH     ],  # noqa
             ['finish',     Player.ST_LAST_ANSWER, Player.ST_FINISH     ],  # noqa
+            ['reset',      Player.ST_FINISH,      Player.ST_WORDS      ],  # noqa
         ]
         self.machine = Machine(model=self, states=states, initial=Player.ST_UNKNOWN)
         for t in transitions:

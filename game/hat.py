@@ -160,6 +160,10 @@ class HatGame:
                 await self.broadcast(message.Finish(results={"message": "no results yet"}))
                 self.state = HatGame.ST_FINISH
 
+                for p in self.players:
+                    """Reset players to ask new words"""
+                    p.reset()   # noqa
+
                 return
 
         log.debug(f'New turn #{s.get_cur_turn()}')
