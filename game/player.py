@@ -9,7 +9,7 @@ class Player:
     words = []
     machine: Machine
 
-    ST_UNKNOWN = 'unknown'         # Just connected - unknow
+    ST_UNKNOWN = 'unknown'         # Just connected - unknown
     ST_WORDS = 'words'             # Waiting for words from player
     ST_WAIT = 'wait'               # Waiting for his move
     ST_BEGIN = 'begin'             # Begin of turn
