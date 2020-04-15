@@ -299,7 +299,8 @@ class HatGame:
     async def restart(self, ws, msg: message.Restart):
         """Restart the game"""
 
-        log.info(f'Game was restarted by {self.sockets_map[id(ws)]}')
+        if id(ws) in self.sockets_map:
+            log.info(f'Game was restarted by {self.sockets_map[id(ws)]}')
 
         if self.timer:
             self.timer.cancel()
@@ -325,3 +326,28 @@ class HatGame:
             numwords=self.num_words,
             timer=self.turn_timer
         ))
+
+    async def reset(self, ws, msg: message.Restart):
+        """Reset the game - disconnect all users except me"""
+
+        me = None
+        if id(ws) in self.sockets_map:
+            me = self.sockets_map[id(ws)]
+            me.reset()
+
+        if me:
+            self.players.remove(me)
+
+        while len(self.players) > 0:
+            p = self.players.pop(0)
+
+            del self.sockets_map[id(p.socket)]
+            del self.players_map[p.name]
+
+            #await p.socket.close()
+
+        if me:
+            self.players.append(me)
+
+        log.info(f'Game was reset by {me if me else "-"}')
+        await self.restart(ws, message.Restart())

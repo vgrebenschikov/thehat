@@ -40,19 +40,17 @@ class Robot:
         listener = ensure_future(self.receive())
 
         if pnum:
-            await self.sendmsg(message.Restart())
+            await self.send_msg(message.Reset())
 
         await self.setup()
 
         if pnum:
             log.info(f'Waiting until other {pnum - 1} players connected')
             while len([p for p, n in self.players.items() if n > 0]) < pnum:
-                msg = await self.waitmsg(message.Prepare)
+                await self.wait_msg(message.Prepare)
 
             log.info(f'All players ready - starting the game')
-            await self.sendmsg(message.Play())
-
-        await self.waitmsg(message.Tour)
+            await self.send_msg(message.Play())
 
         await self.play()
 
@@ -63,7 +61,7 @@ class Robot:
     def error(self, message='Unknown error'):
         print(f'Error: {message}')
 
-    async def sendmsg(self, msg):
+    async def send_msg(self, msg):
         log.info(f'>> {msg.data()}')
         await self.ws.send_json(msg.data())
 
@@ -93,6 +91,8 @@ class Robot:
                         self.tour = msg
                     elif isinstance(msg, message.Turn):
                         self.turn = msg
+                    elif isinstance(msg, message.Explained) or isinstance(msg, message.Missed):
+                        continue
 
                     self.queue.append(msg)
 
@@ -109,24 +109,75 @@ class Robot:
 
         return None
 
-    async def waitmsg(self, cls):
+    async def wait_msg(self, cls):
         while True:
-            for i in range(0, len(self.queue)):
-                msg = self.queue.pop(0)
-                if type(msg) == cls:
-                    return msg
+            for m in self.queue:
+                if type(m) == cls:
+                    self.queue.remove(m)
+                    return m
 
             await sleep(0.1)
 
+    async def has_msg(self, cls):
+        for m in self.queue:
+            if type(m) == cls:
+                return m
+
+        return None
+
+    async def get_msg_if_any(self, cls):
+        for m in self.queue:
+            if type(m) == cls:
+                self.queue.remove(m)
+                return m
+
+        return None
+
     async def setup(self):
-        await self.sendmsg(message.Name(name=self.name))
-        g = await self.waitmsg(message.Game)
+        await self.send_msg(message.Name(name=self.name))
+        g = await self.wait_msg(message.Game)
         ww = []
         for wi in range(0, g.numwords):
             ww.append(Words.get_random_word())
 
-        await self.sendmsg(message.Words(words=ww))
+        await self.send_msg(message.Words(words=ww))
+
+    async def answer(self):
+        await sleep(random.uniform(0.1, 3))
+        await self.send_msg(message.Guessed(guessed=bool(random.randrange(0, 2))))
 
     async def play(self):
-        await self.sendmsg(message.Ready())
-        await self.waitmsg(message.Start)
+        while await self.wait_msg(message.Turn):
+            tour = await self.get_msg_if_any(message.Tour)
+            if tour:
+                log.info(f'Next Tour #{tour.tour}')
+
+            fin = await self.get_msg_if_any(message.Finish)
+            if fin:
+                log.info('Game finished')
+                break
+
+            if self.turn.explain == self.name:
+                log.info(f'Turn #{self.turn.turn} I am explaining')
+                await sleep(random.uniform(0.5, 5))
+                await self.send_msg(message.Ready())
+                await self.wait_msg(message.Start)
+
+                while not await self.get_msg_if_any(message.Stop):
+                    nm = await self.get_msg_if_any(message.Next)
+                    if nm:
+                        await self.answer()
+
+                    await sleep(0.1)
+
+                if not await self.has_msg(message.Turn):
+                    await self.answer()  # last answer, after timeout
+
+            elif self.turn.guess == self.name:
+                log.info(f'Turn #{self.turn.turn} I am guessing')
+                await sleep(random.uniform(0.5, 5))
+                await self.send_msg(message.Ready())
+                await self.wait_msg(message.Start)
+                await self.wait_msg(message.Stop)
+            else:
+                log.info(f'Turn #{self.turn.turn} I am watching')

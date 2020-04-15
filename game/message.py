@@ -94,7 +94,13 @@ class Guessed(ClientMessage):
 
 
 class Restart(ClientMessage):
-    """Restart game message"""
+    """Restart game message, all clients are still here"""
+    def __init__(self):
+        super().__init__()
+
+
+class Reset(ClientMessage):
+    """Reset game message, all clients disconnected (except myself)"""
     def __init__(self):
         super().__init__()
 
@@ -245,6 +251,7 @@ if __name__ == '__main__':
         Ready(),
         Guessed(guessed=True),
         Restart(),
+        Reset(),
         Close()
     ]
 
