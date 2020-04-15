@@ -1,5 +1,6 @@
 from shlyapa.config import Config
 from shlyapa.pair import Pair
+from shlyapa.results import Results
 import random
 
 
@@ -41,6 +42,7 @@ class Shlyapa:
 
     def __init__(self, config):
         self.config = config
+        self.__results = Results(config.number_players, config.number_tours)
         self.__tours = []
         self.__cur_turn = 0
         # First pair in sequence of pairs who have not play yet
@@ -109,6 +111,30 @@ class Shlyapa:
     def get_next_pair(self):
         return self.__next_pair
 
+    def calculate_results(self):
+        self.__results.calculate(self.__tours)
+
+    def reset_results(self):
+        self.__results.reset()
+
+    def get_main_table_results(self):
+        return self.__results.main_table.copy()
+
+    def get_total_score_results(self):
+        return self.__results.total_score.copy()
+
+    def get_explained_table_results(self):
+        return self.__results.explained_table.copy()
+
+    def get_explained_score_results(self):
+        return self.__results.explained_score.copy()
+
+    def get_guessed_table_results(self):
+        return self.__results.guessed_table.copy()
+
+    def get_guessed_score_results(self):
+        return self.__results.guessed_score.copy()
+
     def is_new(self):
         return len(self.__tours) == 0
 
@@ -160,8 +186,38 @@ if __name__ == '__main__':
     print("Start!!")
 
     from shlyapa.next_pair_alg import AVAF
-    g = Shlyapa(Config(type=AVAF, number_players=4, number_words=20))
+    g = Shlyapa(Config(
+        type=AVAF,
+        number_players=4,
+        number_words=20,
+        number_tours=3,
+        is_last_turn_in_tour_divisible=False
+    ))
 
     while not g.is_end():
-        g.move_shlyapa(pair_explained_words=random.randint(0, 1))
         print_shlyapa(g, "move")
+        g.move_shlyapa(pair_explained_words=random.randint(0, 1))
+
+    g.calculate_results()
+
+    m_t = g.get_main_table_results()
+    exp_t = g.get_explained_table_results()
+    gss_t = g.get_guessed_table_results()
+
+    print("======Main Table======")
+    for i in range(g.config.number_tours):
+        print(m_t[i])
+    print("======Explained Table======")
+    for i in range(g.config.number_tours):
+        print(exp_t[i])
+    print("======Guessed Table======")
+    for i in range(g.config.number_tours):
+        print(gss_t[i])
+
+    t_s = g.get_total_score_results()
+    exp_s = g.get_explained_score_results()
+    gss_s = g.get_guessed_score_results()
+
+    print('{:_^5}|{:_^5}|{:_^5}|{:_^5}'.format('#', 'T', 'E', 'G'))
+    for i in range(g.config.number_players):
+        print('{:^5}|{:^5}|{:^5}|{:^5}'.format(i, t_s[i], exp_s[i], gss_s[i]))
