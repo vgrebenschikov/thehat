@@ -196,12 +196,12 @@ class Robot:
                 nw = None
                 while True:
                     st = await self.get_msg_if_any(message.Stop)
-                    nm = await self.get_msg_if_any(message.Next)
+                    nw = await self.get_msg_if_any(message.Next)
 
                     if st:
                         break
 
-                    if nm:
+                    if nw:
                         await self.answer()
                         nw = None
                     else:
