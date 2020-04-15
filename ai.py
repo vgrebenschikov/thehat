@@ -1,9 +1,11 @@
 import asyncio
 import sys
+import logging
 
 from robot.robot import Robot
 import settings
 
+settings.log.handlers[0].setFormatter(logging.Formatter('%(message)s', datefmt='%d-%m-%Y %H:%M:%S'))
 
 async def main():
     r = Robot(uri=f'http://{settings.SITE_HOST}:{settings.SITE_PORT}/ws')

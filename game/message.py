@@ -207,8 +207,10 @@ class Missed(ServerMessage):
 class Stop(ServerMessage):
     """Turn time is out"""
 
-    def __init__(self):
-        super().__init__()
+    reason: str
+
+    def __init__(self, reason=None):
+        super().__init__(reason=reason)
 
 
 class Finish(ServerMessage):

@@ -8,11 +8,34 @@ import json
 import names
 import random
 from typing import (List, Dict, Optional)
+from colorama import Fore, Style
 
 from .words import Words
 import game.message as message
 import settings
 from settings import log
+
+cc = Style.BRIGHT + Fore.GREEN
+sc = Style.BRIGHT + Fore.BLUE
+ec = Style.BRIGHT + Fore.RED
+mc = Style.BRIGHT + Fore.YELLOW
+rc = Style.RESET_ALL
+
+
+def logS(message, *args):
+    log.info(sc + message + rc, *args)
+
+
+def logC(message, *args):
+    log.info(cc + message + rc, *args)
+
+
+def logM(message, *args):
+    log.info(mc + message + rc, *args)
+
+
+def logE(message, *args):
+    log.info(ec + message + rc, *args)
 
 
 class Robot:
@@ -22,6 +45,8 @@ class Robot:
     players: Dict[str, int]
     tour: Optional[message.Tour]
     turn: Optional[message.Turn]
+    turn: Optional[message.Finish]
+    finished: bool
 
     def __init__(self, uri=None, name=None):
         self.uri = uri
@@ -30,6 +55,9 @@ class Robot:
         self.players = {}
         self.tour = None
         self.turn = None
+        self.finish = None
+
+        self.finished = False
 
     async def run(self, pnum=None, wait=10):
 
@@ -45,24 +73,23 @@ class Robot:
         await self.setup()
 
         if pnum:
-            log.info(f'Waiting until other {pnum - 1} players connected')
+            logM(f'Waiting until other {pnum - 1} players connected')
             while len([p for p, n in self.players.items() if n > 0]) < pnum:
                 await self.wait_msg(message.Prepare)
 
-            log.info(f'All players ready - starting the game')
+            logM(f'All players ready - starting the game')
             await self.send_msg(message.Play())
 
         await self.play()
 
-        await listener
-
+        listener.cancel()
         await session.close()
 
     def error(self, message='Unknown error'):
-        print(f'Error: {message}')
+        logE(f'Error: {message}')
 
     async def send_msg(self, msg):
-        log.info(f'>> {msg.data()}')
+        logC(f'>> {msg.data()}')
         await self.ws.send_json(msg.data())
 
     async def receive(self):
@@ -72,7 +99,7 @@ class Robot:
             if tmsg.type == WSMsgType.text:
                 try:
                     data = json.loads(tmsg.data)
-                    log.info(f'<< {data}')
+                    logS(f'<< {data}')
                 except Exception as e:
                     self.error(f'Broken message received {e}')
                     continue
@@ -91,6 +118,9 @@ class Robot:
                         self.tour = msg
                     elif isinstance(msg, message.Turn):
                         self.turn = msg
+                    elif isinstance(msg, message.Finish):
+                        self.finish = msg
+                        return
                     elif isinstance(msg, message.Explained) or isinstance(msg, message.Missed):
                         continue
 
@@ -105,12 +135,12 @@ class Robot:
             elif tmsg.type == WSMsgType.error:
                 break
 
-        log.error('Websocket closed unexpectedly')
+        logE('Websocket closed unexpectedly')
 
         return None
 
     async def wait_msg(self, cls):
-        while True:
+        while True and not self.finished:
             for m in self.queue:
                 if type(m) == cls:
                     self.queue.remove(m)
@@ -143,41 +173,45 @@ class Robot:
         await self.send_msg(message.Words(words=ww))
 
     async def answer(self):
-        await sleep(random.uniform(0.1, 3))
+        await sleep(random.uniform(0.1, 1))
         await self.send_msg(message.Guessed(guessed=bool(random.randrange(0, 2))))
 
     async def play(self):
-        while await self.wait_msg(message.Turn):
+        while not self.finished and await self.wait_msg(message.Turn):
             tour = await self.get_msg_if_any(message.Tour)
             if tour:
-                log.info(f'Next Tour #{tour.tour}')
-
-            fin = await self.get_msg_if_any(message.Finish)
-            if fin:
-                log.info('Game finished')
-                break
+                logM(f'Next Tour #{tour.tour}')
 
             if self.turn.explain == self.name:
-                log.info(f'Turn #{self.turn.turn} I am explaining')
-                await sleep(random.uniform(0.5, 5))
+                logM(f'Turn #{self.turn.turn} I am explaining')
+                await sleep(random.uniform(0.2, 2))
+
+                while await self.get_msg_if_any(message.Stop):
+                    pass  # eat late stops
+
                 await self.send_msg(message.Ready())
                 await self.wait_msg(message.Start)
 
+                nw = None
                 while not await self.get_msg_if_any(message.Stop):
                     nm = await self.get_msg_if_any(message.Next)
                     if nm:
                         await self.answer()
-
-                    await sleep(0.1)
+                        nw = None
+                    else:
+                        await sleep(0.1)
 
                 if not await self.has_msg(message.Turn):
-                    await self.answer()  # last answer, after timeout
+                    if nw:
+                        await self.answer()  # last answer, after timeout
 
             elif self.turn.guess == self.name:
-                log.info(f'Turn #{self.turn.turn} I am guessing')
-                await sleep(random.uniform(0.5, 5))
+                logM(f'Turn #{self.turn.turn} I am guessing')
+                await sleep(random.uniform(0.2, 2))
                 await self.send_msg(message.Ready())
                 await self.wait_msg(message.Start)
                 await self.wait_msg(message.Stop)
             else:
-                log.info(f'Turn #{self.turn.turn} I am watching')
+                logM(f'Turn #{self.turn.turn} I am watching')
+
+        logM('Game finished')

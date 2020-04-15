@@ -261,7 +261,7 @@ class HatGame:
 
             log.debug('No more words - next turn')
 
-            await self.broadcast(message.Stop())
+            await self.broadcast(message.Stop(reason='empty'))
 
             self.cur_pair.explaining.finish()
             self.cur_pair.guessing.finish()
@@ -279,7 +279,7 @@ class HatGame:
         try:
             log.debug('Turn timer expired, stop turn')
 
-            await self.broadcast(message.Stop())
+            await self.broadcast(message.Stop(reason='timer'))
 
             self.cur_pair.explaining.lastanswer()
             self.cur_pair.guessing.finish()
