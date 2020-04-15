@@ -1,7 +1,7 @@
 import json
 import sys
 
-from typing import (List, get_type_hints)
+from typing import (List, Dict, get_type_hints)
 
 
 class Message(object):
@@ -99,6 +99,12 @@ class Restart(ClientMessage):
         super().__init__()
 
 
+class Close(ClientMessage):
+    """Gracefully close connection"""
+    def __init__(self):
+        super().__init__()
+
+
 class ServerMessage(Message):
     """Abstract base class for server messages"""
 
@@ -128,7 +134,7 @@ class Game(ServerMessage):
 class Prepare(ServerMessage):
     """Notify everybody about who is joined to game"""
 
-    players: List[str]
+    players: Dict[str, int]
 
     def __init__(self, players=None):
         super().__init__(players=players)
@@ -237,7 +243,9 @@ if __name__ == '__main__':
         Words(words=["apple", "orange", "banana"]),
         Play(),
         Ready(),
-        Guessed(guessed=True)
+        Guessed(guessed=True),
+        Restart(),
+        Close()
     ]
 
     for msg in client_messages:

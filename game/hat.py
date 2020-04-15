@@ -287,6 +287,15 @@ class HatGame:
             log.error(f'Exception while process timer: {e}')
             log.exception()
 
+    async def close(self, ws, msg: message.Close):
+        """Close connection"""
+        p = self.sockets_map[id(ws)]
+        del self.sockets_map[id(ws)]
+        del self.players_map[p.name]
+        self.players.remove(p)
+
+        await p.socket.close()
+
     async def restart(self, ws, msg: message.Restart):
         """Restart the game"""
 
