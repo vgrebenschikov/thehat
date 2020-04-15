@@ -1,5 +1,4 @@
 from shlyapa.next_pair_alg import (AVA, AVAF, NextPairAlg, Original)
-
 import yaml
 
 default_config_game_filepath = "config/game.yaml"
@@ -10,8 +9,8 @@ class Config(object):
                  type=AVAF,
                  number_players=None,
                  number_words=None,
-                 number_tours=3,
-                 is_last_turn_in_tour_divisible=True):
+                 number_tours=None,
+                 is_last_turn_in_tour_divisible=None):
         self.type = None
         self.number_players = None
         self.number_words = None
