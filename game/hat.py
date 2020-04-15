@@ -286,3 +286,33 @@ class HatGame:
         except Exception as e:
             log.error(f'Exception while process timer: {e}')
             log.exception()
+
+    async def restart(self, ws, msg: message.Restart):
+        """Restart the game"""
+
+        log.info(f'Game was restarted by {self.sockets_map[id(ws)]}')
+
+        if self.timer:
+            self.timer.cancel()
+
+        self.all_words = []
+        self.tour_words = []
+        self.missed_words = []
+        self.id = str(uuid.uuid4())
+        self.state = HatGame.ST_SETUP
+        self.shlyapa = None
+        self.num_words = 6
+        self.turn_timer = 20  # in seconds
+        self.cur_pair = None
+        self.cur_word = None
+        self.cur_guessed = None
+        self.timer = None
+
+        for p in self.players:
+            p.reset()
+
+        await self.broadcast(message.Game(
+            id=self.id,
+            numwords=self.num_words,
+            timer=self.turn_timer
+        ))
