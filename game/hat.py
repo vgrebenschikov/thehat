@@ -119,6 +119,7 @@ class HatGame:
         cfg = Config(
             number_players=len(self.players),
             number_words=len(self.all_words),
+            number_tours=3,
             is_last_turn_in_tour_divisible=False)
 
         self.shlyapa = Shlyapa(config=cfg)
@@ -157,7 +158,29 @@ class HatGame:
                 await self.tour()
 
             if s.is_end():
-                await self.broadcast(message.Finish(results={"message": "no results yet"}))
+                def player_array_to_dict(score_list):
+                    return dict([(self.players[i].name, v) for i, v in enumerate(score_list)])
+
+                s.calculate_results()
+                total_score = player_array_to_dict(s.get_total_score_results())
+                explained_score = player_array_to_dict(s.get_explained_score_results())
+                guessed_score = player_array_to_dict(s.get_guessed_score_results())
+
+                score = {}
+                for p in self.players:
+                    score[p.name] = {
+                        "total": total_score[p.name],
+                        "explained": explained_score[p.name],
+                        "guessed": guessed_score[p.name]
+                    }
+
+                results = {
+                    "score": score,
+                    "explained": [player_array_to_dict(t) for t in s.get_explained_table_results()],
+                    "guessed": [player_array_to_dict(t) for t in s.get_guessed_table_results()]
+                }
+
+                await self.broadcast(message.Finish(results=results))
                 self.state = HatGame.ST_FINISH
 
                 for p in self.players:
@@ -344,7 +367,7 @@ class HatGame:
             del self.sockets_map[id(p.socket)]
             del self.players_map[p.name]
 
-            #await p.socket.close()
+            await p.socket.close()
 
         if me:
             self.players.append(me)

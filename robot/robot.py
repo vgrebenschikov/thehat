@@ -46,7 +46,6 @@ class Robot:
     tour: Optional[message.Tour]
     turn: Optional[message.Turn]
     turn: Optional[message.Finish]
-    finished: bool
 
     def __init__(self, uri=None, name=None):
         self.uri = uri
@@ -56,8 +55,6 @@ class Robot:
         self.tour = None
         self.turn = None
         self.finish = None
-
-        self.finished = False
 
     async def run(self, pnum=None, wait=10):
 
@@ -140,7 +137,7 @@ class Robot:
         return None
 
     async def wait_msg(self, cls):
-        while True and not self.finished:
+        while True and not self.finish:
             for m in self.queue:
                 if type(m) == cls:
                     self.queue.remove(m)
@@ -173,11 +170,11 @@ class Robot:
         await self.send_msg(message.Words(words=ww))
 
     async def answer(self):
-        await sleep(random.uniform(0.1, 1))
+        await sleep(random.uniform(0.1, 2))
         await self.send_msg(message.Guessed(guessed=bool(random.randrange(0, 2))))
 
     async def play(self):
-        while not self.finished and await self.wait_msg(message.Turn):
+        while not self.finish and await self.wait_msg(message.Turn):
             tour = await self.get_msg_if_any(message.Tour)
             if tour:
                 logM(f'Next Tour #{tour.tour}')
@@ -213,5 +210,8 @@ class Robot:
                 await self.wait_msg(message.Stop)
             else:
                 logM(f'Turn #{self.turn.turn} I am watching')
+
+            if self.finish:
+                break
 
         logM('Game finished')
