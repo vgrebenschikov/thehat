@@ -1,5 +1,7 @@
 from shlyapa.config import Config
 from shlyapa.pair import Pair
+from shlyapa.results import Results
+
 import random
 
 
@@ -39,55 +41,9 @@ class Shlyapa:
         def is_end(self):
             return self.number_explained_words == self.number_words
 
-    class Results:
-        def __init__(self, number_players, number_tours):
-            self.number_players = number_players
-            self.number_tours = number_tours
-
-            # main_table[i_tour][i_exp][i_gss] = number explained words by pair(i_exp, i_gss) in i_tour
-            self.main_table = None
-            # explained_table[i_tour][i_exp] = number explained words by i_exp in i_tour
-            self.explained_table = None
-            # guessed_table[i_tour][i_gss] = number guessed words by i_gss in i_tour
-            self.guessed_table = None
-
-            # total_score[i] = number of guessed and explained words by i
-            self.total_score = None
-            # explained_score[i] = number of explained words by i
-            self.explained_score = None
-            # guessed_score[i] = number of guessed words by i
-            self.guessed_score = None
-
-            self.reset()
-
-        def reset(self):
-            self.main_table = \
-                [[[0] * self.number_players for i in range(self.number_players)] for j in range(self.number_tours)]
-            self.explained_table = [[0] * self.number_players for i in range(self.number_tours)]
-            self.guessed_table = [[0] * self.number_players for i in range(self.number_tours)]
-
-            self.total_score = [0] * self.number_players
-            self.explained_score = [0] * self.number_players
-            self.guessed_score = [0] * self.number_players
-
-        def calculate(self, tours):
-            self.reset()
-            for t in range(self.number_tours):
-                for e in tours[t].explanations:
-                    self.main_table[t][e.pair.explaining][e.pair.guessing] += e.number_explained
-
-            for t in range(self.number_tours):
-                for i in range(self.number_players):
-                    for j in range(self.number_players):
-                        self.explained_table[t][i] += self.main_table[t][i][j]
-                        self.guessed_table[t][i] += self.main_table[t][j][i]
-                    self.explained_score[i] += self.explained_table[t][i]
-                    self.guessed_score[i] += self.guessed_table[t][i]
-                    self.total_score[i] += self.explained_table[t][i] + self.guessed_table[t][i]
-
     def __init__(self, config):
         self.config = config
-        self.__results = Game.Results(config.number_players, config.number_tours)
+        self.__results = Results(config.number_players, config.number_tours)
         self.__tours = []
         self.__cur_turn = 0
         # First pair in sequence of pairs who have not play yet
@@ -257,6 +213,7 @@ if __name__ == '__main__':
     t_s = g.get_total_score_results()
     exp_s = g.get_explained_score_results()
     gss_s = g.get_guessed_score_results()
-    print("#|    T|    E|    G")
+
+    print('{:_^5}|{:_^5}|{:_^5}|{:_^5}'.format('#', 'T', 'E', 'G'))
     for i in range(g.config.number_players):
-        print(i, t_s[i], exp_s[i], gss_s[i], sep="|    ")
+        print('{:^5}|{:^5}|{:^5}|{:^5}'.format(i, t_s[i], exp_s[i], gss_s[i]))
