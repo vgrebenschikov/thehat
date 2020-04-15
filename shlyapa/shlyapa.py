@@ -196,7 +196,7 @@ if __name__ == '__main__':
 
     while not g.is_end():
         print_shlyapa(g, "move")
-        g.move_shlyapa(pair_explained_words=random.randint(1, 1))
+        g.move_shlyapa(pair_explained_words=random.randint(0, 1))
 
     g.calculate_results()
 
