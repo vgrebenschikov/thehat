@@ -47,7 +47,7 @@ class Robot:
     turn: Optional[message.Turn]
     turn: Optional[message.Finish]
 
-    def __init__(self, uri=None, name=None):
+    def __init__(self, uri=None, name=None, id=None):
         self.uri = uri
         self.name = name if name else names.get_first_name()
         self.queue = []
@@ -56,6 +56,7 @@ class Robot:
         self.turn = None
         self.finish = None
         self.sleep = None
+        self.id = f'{id} ' if id else ''
 
     async def run(self, pnum=None, wait=10):
 
