@@ -186,8 +186,19 @@ if __name__ == '__main__':
 
     print("Start!!")
 
+<<<<<<< HEAD
     from shlyapa.next_pair_alg import AVAF
     g = Shlyapa(Config(type=AVAF, number_players=4, number_words=20, number_tours=3))
+=======
+    from next_pair_alg import AVAF
+    g = Game(Config(
+        type=AVAF,
+        number_players=4,
+        number_words=2,
+        number_tours=3,
+        is_last_turn_in_tour_divisible=False
+    ))
+>>>>>>> Import fixes
 
     while not g.is_end():
         print_shlyapa(g, "move")
