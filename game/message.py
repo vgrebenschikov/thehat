@@ -111,6 +111,16 @@ class Close(ClientMessage):
         super().__init__()
 
 
+class Setup(ClientMessage):
+    """Setup Game"""
+
+    numwords: int
+    timer: int
+
+    def __init__(self, numwords=None, timer=None):
+        super().__init__(numwords=numwords, timer=timer)
+
+
 class ServerMessage(Message):
     """Abstract base class for server messages"""
 
@@ -235,6 +245,7 @@ if __name__ == '__main__':
         Next(word="banana"),
         Explained(word="banana"),
         Missed(),
+        Setup(numwords=7, timer=10)
     ]
 
     smsgs = []

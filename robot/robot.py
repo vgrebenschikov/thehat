@@ -55,6 +55,7 @@ class Robot:
         self.tour = None
         self.turn = None
         self.finish = None
+        self.sleep = None
 
     async def run(self, pnum=None, wait=10):
 
@@ -66,6 +67,7 @@ class Robot:
 
         if pnum:
             await self.send_msg(message.Reset())
+            await self.send_msg(message.Setup(numwords=6, timer=1))
 
         await self.setup()
 
@@ -170,7 +172,8 @@ class Robot:
         await self.send_msg(message.Words(words=ww))
 
     async def answer(self):
-        await sleep(random.uniform(0.1, 2))
+        if self.sleep:
+            await sleep(random.uniform(0.1, self.sleep))
         await self.send_msg(message.Guessed(guessed=bool(random.randrange(0, 2))))
 
     async def play(self):
@@ -181,7 +184,8 @@ class Robot:
 
             if self.turn.explain == self.name:
                 logM(f'Turn #{self.turn.turn} I am explaining')
-                await sleep(random.uniform(0.2, 2))
+                if self.sleep:
+                    await sleep(random.uniform(0.2, self.sleep))
 
                 while await self.get_msg_if_any(message.Stop):
                     pass  # eat late stops
@@ -190,21 +194,26 @@ class Robot:
                 await self.wait_msg(message.Start)
 
                 nw = None
-                while not await self.get_msg_if_any(message.Stop):
+                while True:
+                    st = await self.get_msg_if_any(message.Stop)
                     nm = await self.get_msg_if_any(message.Next)
+
+                    if st:
+                        break
+
                     if nm:
                         await self.answer()
                         nw = None
                     else:
                         await sleep(0.1)
 
-                if not await self.has_msg(message.Turn):
-                    if nw:
-                        await self.answer()  # last answer, after timeout
+                if st.reason == 'timer':
+                    await self.answer()  # last answer, after timeout
 
             elif self.turn.guess == self.name:
                 logM(f'Turn #{self.turn.turn} I am guessing')
-                await sleep(random.uniform(0.2, 2))
+                if self.sleep:
+                    await sleep(random.uniform(0.2, self.sleep))
                 await self.send_msg(message.Ready())
                 await self.wait_msg(message.Start)
                 await self.wait_msg(message.Stop)

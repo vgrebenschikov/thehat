@@ -100,6 +100,16 @@ class HatGame:
 
         await self.prepare()
 
+    async def setup(self, ws, msg: message.Setup):
+        self.num_words = msg.numwords
+        self.turn_timer = msg.timer
+
+        await self.broadcast(message.Game(
+            id=self.id,
+            numwords=self.num_words,
+            timer=self.turn_timer
+        ))
+
     async def prepare(self):
         """Notify All Players about changed set of players"""
         players = dict([(p.name, len(p.words)) for p in self.players])
@@ -334,8 +344,6 @@ class HatGame:
         self.id = str(uuid.uuid4())
         self.state = HatGame.ST_SETUP
         self.shlyapa = None
-        self.num_words = 6
-        self.turn_timer = 20  # in seconds
         self.cur_pair = None
         self.cur_word = None
         self.cur_guessed = None
