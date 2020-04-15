@@ -1,7 +1,6 @@
 from shlyapa.config import Config
 from shlyapa.pair import Pair
 from shlyapa.results import Results
-
 import random
 
 
@@ -187,10 +186,14 @@ if __name__ == '__main__':
     print("Start!!")
 
 <<<<<<< HEAD
+<<<<<<< HEAD
     from shlyapa.next_pair_alg import AVAF
     g = Shlyapa(Config(type=AVAF, number_players=4, number_words=20, number_tours=3))
 =======
     from next_pair_alg import AVAF
+=======
+    from shlyapa.next_pair_alg import AVAF
+>>>>>>> Import fixes
     g = Game(Config(
         type=AVAF,
         number_players=4,
@@ -203,7 +206,6 @@ if __name__ == '__main__':
     while not g.is_end():
         print_shlyapa(g, "move")
         g.move_shlyapa(pair_explained_words=random.randint(1, 1))
-
 
     g.calculate_results()
 

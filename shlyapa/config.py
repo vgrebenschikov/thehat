@@ -1,5 +1,4 @@
 from shlyapa.next_pair_alg import (AVA, AVAF, NextPairAlg, Original)
-
 import yaml
 
 default_config_game_filepath = "config/game.yaml"
