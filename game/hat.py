@@ -72,14 +72,28 @@ class HatGame:
     async def name(self, ws, msg: message.Name):
         """Set my name - (re)login procedure on socket"""
         name = msg.name
-        log.debug(f'user {name} logged in as {id(ws)}')
 
-        if self.add_player(name=name, socket=ws):
+        if name not in self.players_map:
+            if self.state != HatGame.ST_SETUP:
+                log.info(f'Cannot login new user {name}({id(ws)}) while game in progress')
+                return
+
             log.info(f'Player {name}({id(ws)}) was added to game')
         else:
             log.info(f'Player {name}({id(ws)}) already in list, re-connect user')
 
+        self.add_player(name=name, socket=ws)
         await self.game(ws)
+
+        if self.state == HatGame.ST_PLAY and self.shlyapa:
+            s = self.shlyapa
+            await ws.send_json(message.Tour(tour=s.get_cur_tour()).data())
+            if self.cur_pair:
+                await ws.send_json(message.Turn(
+                    turn=s.get_cur_turn(),
+                    explain=self.cur_pair.explaining.name,
+                    guess=self.cur_pair.guessing.name
+                ).data())
 
     async def game(self, ws):
         """Notify just known Player about Game layout"""
@@ -87,7 +101,8 @@ class HatGame:
             message.Game(
                 id=self.id,
                 numwords=self.num_words,
-                timer=self.turn_timer
+                timer=self.turn_timer,
+                state=self.state
             ).data())
         await self.prepare()
 
@@ -99,6 +114,17 @@ class HatGame:
         log.debug(f'user {p.name} sent words: {words}')
 
         await self.prepare()
+
+    async def setup(self, ws, msg: message.Setup):
+        self.num_words = msg.numwords
+        self.turn_timer = msg.timer
+
+        await self.broadcast(message.Game(
+            id=self.id,
+            numwords=self.num_words,
+            timer=self.turn_timer,
+            state=self.state
+        ))
 
     async def prepare(self):
         """Notify All Players about changed set of players"""
@@ -334,8 +360,6 @@ class HatGame:
         self.id = str(uuid.uuid4())
         self.state = HatGame.ST_SETUP
         self.shlyapa = None
-        self.num_words = 6
-        self.turn_timer = 20  # in seconds
         self.cur_pair = None
         self.cur_word = None
         self.cur_guessed = None
@@ -347,7 +371,8 @@ class HatGame:
         await self.broadcast(message.Game(
             id=self.id,
             numwords=self.num_words,
-            timer=self.turn_timer
+            timer=self.turn_timer,
+            state=self.state
         ))
 
     async def reset(self, ws, msg: message.Restart):

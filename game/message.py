@@ -111,6 +111,16 @@ class Close(ClientMessage):
         super().__init__()
 
 
+class Setup(ClientMessage):
+    """Setup Game"""
+
+    numwords: int
+    timer: int
+
+    def __init__(self, numwords=None, timer=None):
+        super().__init__(numwords=numwords, timer=timer)
+
+
 class ServerMessage(Message):
     """Abstract base class for server messages"""
 
@@ -132,9 +142,10 @@ class Game(ServerMessage):
     id: str
     numwords: int
     timer: int
+    state: str
 
-    def __init__(self, id=None, numwords=None, timer=None):
-        super().__init__(id=id, numwords=numwords, timer=timer)
+    def __init__(self, id=None, numwords=None, timer=None, state=None):
+        super().__init__(id=id, numwords=numwords, timer=timer, state=state)
 
 
 class Prepare(ServerMessage):
@@ -235,6 +246,7 @@ if __name__ == '__main__':
         Next(word="banana"),
         Explained(word="banana"),
         Missed(),
+        Setup(numwords=7, timer=10)
     ]
 
     smsgs = []
