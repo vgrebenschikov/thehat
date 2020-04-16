@@ -49,7 +49,7 @@ class HatGame:
         self.cur_guessed = None
         self.timer = None
 
-    def add_player(self, name=None, socket=None) -> bool:
+    def register_player(self, name=None, socket=None) -> bool:
         """Add new player to game"""
         if name in self.players_map:
             p = self.players_map[name]
@@ -82,8 +82,10 @@ class HatGame:
         else:
             log.info(f'Player {name}({id(ws)}) already in list, re-connect user')
 
-        self.add_player(name=name, socket=ws)
+        reconnect = not self.register_player(name=name, socket=ws)
+
         await self.game(ws)
+        await self.prepare(ws if reconnect else None)  # on reconnect send to self only
 
         if self.state == HatGame.ST_PLAY and self.shlyapa:
             s = self.shlyapa
@@ -104,7 +106,6 @@ class HatGame:
                 timer=self.turn_timer,
                 state=self.state
             ).data())
-        await self.prepare()
 
     async def words(self, ws, msg: message.Words):
         """Player sends it's words to server"""
@@ -126,10 +127,15 @@ class HatGame:
             state=self.state
         ))
 
-    async def prepare(self):
+    async def prepare(self, ws=None):
         """Notify All Players about changed set of players"""
         players = dict([(p.name, len(p.words)) for p in self.players])
-        await self.broadcast(message.Prepare(players=players))
+        msg = message.Prepare(players=players)
+
+        if ws is not None:
+            await ws.send_json(msg.data())
+        else:
+            await self.broadcast(msg)
 
     async def play(self, ws, msg: message.Play):
         """Move Game from ST_SETUP phase to ST_PLAY - start game"""

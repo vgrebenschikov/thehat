@@ -164,6 +164,7 @@ class Robot:
                 break
 
         self.logE('Websocket closed unexpectedly')
+        self.finish = message.Finish()
 
         return None
 
