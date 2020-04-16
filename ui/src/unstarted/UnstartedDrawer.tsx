@@ -1,7 +1,16 @@
 import {inject, observer} from "mobx-react";
 import DataStore from "../store/DataStore";
 import React from "react";
-import {Box, List, ListItem, ListItemSecondaryAction, ListItemText, styled, Typography} from "@material-ui/core";
+import {
+  Box,
+  Button,
+  List,
+  ListItem,
+  ListItemSecondaryAction,
+  ListItemText,
+  styled,
+  Typography
+} from "@material-ui/core";
 
 const PersonItem = (props: {person: string, ready: boolean}) => {
   return <ListItem>
@@ -10,7 +19,7 @@ const PersonItem = (props: {person: string, ready: boolean}) => {
   </ListItem>
 };
 
-const NumWords = styled(Box)(({theme}) => ({
+const Title = styled(Box)(({theme}) => ({
   height: '40px',
   padding: '10px 24px',
   color: theme.palette.primary.contrastText,
@@ -19,19 +28,30 @@ const NumWords = styled(Box)(({theme}) => ({
   alignItems: 'center',
 }));
 
+const BottomPad = styled(Box)(({theme}) => ({
+  height: '40px',
+  padding: '10px 24px',
+  backgroundColor: theme.palette.background.paper,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  boxShadow: '0 0 4px',
+}));
 
 export default inject('datastore')(observer((props: {datastore?: DataStore}) => {
   const game = props.datastore?.game!;
   const numPlayers = game.players.length;
   return <>
-    <NumWords>
+    <Title>
       <Typography variant="h6">Игроков: {numPlayers}</Typography>
-    </NumWords>
+    </Title>
     <List>
       {game.players.map((user) => {
-        return <PersonItem person={user.name} ready={false} key={user.uid}/>
+        return <PersonItem person={user.name} ready={user.done} key={user.uid}/>
       })}
     </List>
-    {/*<PlayButton/>*/}
+    <BottomPad>
+      <Button variant="contained" color="primary" onClick={game.sendPlay}>Начать игру</Button>
+    </BottomPad>
   </>;
 }));

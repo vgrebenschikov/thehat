@@ -6,7 +6,6 @@ import {action, computed, observable, runInAction} from "mobx";
 import Game from "./Game";
 import firebaseConfig from 'firebase-config';
 import WebSocketConnection from "./WebSocketConnection";
-import {act} from "react-dom/test-utils";
 
 export default class DataStore {
     @observable user: User | null = null;
@@ -79,7 +78,8 @@ export default class DataStore {
     }
 
     @action
-    sendWords() {
+    async sendWords() {
         this.game?.sendWords(this.ownWords);
+        this.ownWords = [];
     }
 }

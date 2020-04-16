@@ -1,47 +1,22 @@
+import React from "react";
 import {action, observable} from "mobx";
 import {inject, observer} from "mobx-react";
-import React from "react";
 import {
   Box,
   Button,
-  createStyles,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
   IconButton,
   Input,
-  Paper,
   styled,
-  Theme,
-  withStyles
 } from "@material-ui/core";
+
 import DataStore from "store/DataStore";
 import {DialogStore} from "common/DialogStore";
 
-const styles = (theme: Theme) => createStyles({
-  button: {
-    margin: theme.spacing(2),
-  },
-});
-
-const Card = styled(Paper)(({theme}) => ({
-  padding: '16px',
-  display: 'flex',
-  flexDirection: 'row',
-  alignItems: 'center',
-  justifyContent: 'stretch',
-  marginBottom: '8px',
-  boxShadow: '0 0 4px',
-  '& .content': {
-    fontsize: '24px',
-    color: theme.palette.text.primary,
-    flexGrow: 1,
-  },
-  '& .icon': {
-    flexGrow: 0,
-  }
-})) as typeof Paper;
+import {Card} from "common/Card";
 
 interface WordCardProps {
   word: string,
@@ -79,7 +54,7 @@ class AddButton extends React.Component<{ datastore?: DataStore }, {}> {
 
   render() {
     return <Card>
-      <Button className="content" onClick={this.ds.open}><i className="material-icons-round">add</i></Button>
+      <Button className="full-width-button" onClick={this.ds.open}><i className="material-icons-round">add</i></Button>
       <Dialog open={this.ds.isOpen} onClose={this.ds.close}>
         <DialogTitle>Введите новое слово</DialogTitle>
         <form onSubmit={(ev) => {
@@ -100,7 +75,6 @@ class AddButton extends React.Component<{ datastore?: DataStore }, {}> {
   }
 }
 
-
 const BottomButton = styled(Box)(({theme}) => ({
   position: 'absolute',
   bottom: 0,
@@ -116,7 +90,7 @@ const BottomButton = styled(Box)(({theme}) => ({
     width: '100%',
     height: '100%',
   },
-})) as typeof Paper;
+})) as typeof Box;
 
 @inject('datastore')
 @observer

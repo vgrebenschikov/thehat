@@ -24,7 +24,7 @@ export default class WebSocketConnection {
 
     @action reconnect = () => {
       this.connectionStatus = ConnectionStatus.Connecting;
-      const wsUri = 'ws:localhost:8088/ws';
+      const wsUri = process.env.NODE_ENV === 'development' ? `ws:${window.location.hostname}:8088/ws`: `ws:${window.location.host}/ws`;
       this.ws = new WebSocket(wsUri);
       this.ws.addEventListener('open', this.onOpen);
       this.ws.addEventListener('message', this.onMessage);
@@ -46,6 +46,10 @@ export default class WebSocketConnection {
 
     onMessage = (event: any) => {
       const data = JSON.parse(event.data);
+      this.sendToSubscribers(data);
+    };
+
+    sendToSubscribers = (data: any) => {
       for (const receiver of this.receivers) {
         try {
           receiver(data);
@@ -57,6 +61,7 @@ export default class WebSocketConnection {
 
     @action onOpen = (): void => {
       this.connectionStatus = ConnectionStatus.Established;
+      this.sendToSubscribers(null);
     };
 
     @action onClose = (event: any) => {
@@ -85,6 +90,8 @@ export default class WebSocketConnection {
       this.ws!.send(JSON.stringify(data));
     };
 
+    // Subscribe to be sent all messages received on websocket.
+    // Every subscriber also gets a `null` at connection (re)start.
     subscribeReceiver = (receiver: (data: any) => void) => {
       this.receivers.push(receiver);
     };
