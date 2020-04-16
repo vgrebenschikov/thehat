@@ -1,4 +1,4 @@
-from asyncio import (get_event_loop, ensure_future, gather)
+from asyncio import (get_event_loop, ensure_future, gather, sleep)
 
 import sys
 import logging
@@ -9,25 +9,50 @@ import settings
 settings.log.handlers[0].setFormatter(logging.Formatter('%(message)s', datefmt='%d-%m-%Y %H:%M:%S'))
 
 
+def results(res, names=None, prefix=None):
+    print()
+    for h in (('Player', 'Total', 'Explained', 'Guessed'), ('-' * 14, '-' * 9, '-' * 9, '-' * 9)):
+        print(f"{h[0]:<14s} {h[1]:>9s} {h[2]:>9s} {h[3]:>9s}")
+
+    if not names:
+        names = list(res['score'].keys())
+
+    if not prefix:
+        prefix = names
+
+    for i in range(0, len(names)):
+        sc = res['score'][names[i]]
+        print(f"{prefix[i]:14s} {sc['total']:9d} {sc['explained']:9d} {sc['guessed']:9d}")
+
+
 async def main():
     uri = f'http://{settings.SITE_HOST}:{settings.SITE_PORT}/ws'
 
     if len(sys.argv) == 3:
-        wrk = []
         pnum = int(sys.argv[1])
-        for i in range(0, pnum):
-            av = {}
-            if i == 0:
-                av['pnum'] = pnum
-            r = Robot(uri=uri)
-            wrk.append(ensure_future(r.run(**av)))
+        r = Robot(uri=uri, idx=0)
+        rbs = [r]
+        wrk = [ensure_future(r.run(pnum=pnum))]
+
+        await sleep(0.2)  # Leader process should be able to reset game
+
+        for i in range(1, pnum):
+            r = Robot(uri=uri, idx=i)
+            rbs.append(r)
+            wrk.append(ensure_future(r.run()))
 
         await gather(*wrk)
-    if len(sys.argv) == 2:
+        results(wrk[0].result(), [r.name for r in rbs], [r.id_prefix for r in rbs])
+
+    elif len(sys.argv) == 2:
         r = Robot(uri=uri)
-        await r.run(pnum=int(sys.argv[1]))
+        res = await r.run(pnum=int(sys.argv[1]))
+        results(res)
+
     else:
-        await r.run()
+        r = Robot(uri=uri)
+        res = await r.run()
+        results(res)
 
 if __name__ == '__main__':
     loop = get_event_loop()

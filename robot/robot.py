@@ -8,34 +8,37 @@ import json
 import names
 import random
 from typing import (List, Dict, Optional)
-from colorama import Fore, Style
+from colorama import Fore, Back, Style
 
 from .words import Words
 import game.message as message
 import settings
 from settings import log
 
-cc = Style.BRIGHT + Fore.GREEN
-sc = Style.BRIGHT + Fore.BLUE
-ec = Style.BRIGHT + Fore.RED
-mc = Style.BRIGHT + Fore.YELLOW
-rc = Style.RESET_ALL
+COLOR_CLIENT = Style.BRIGHT + Fore.GREEN
+COLOR_SERVER = Style.BRIGHT + Fore.BLUE
+COLOR_ERROR = Style.BRIGHT + Fore.RED
+COLOR_MESSAGE = Style.BRIGHT + Fore.YELLOW
+COLOR_RESET = Style.RESET_ALL
 
-
-def logS(message, *args):
-    log.info(sc + message + rc, *args)
-
-
-def logC(message, *args):
-    log.info(cc + message + rc, *args)
-
-
-def logM(message, *args):
-    log.info(mc + message + rc, *args)
-
-
-def logE(message, *args):
-    log.info(ec + message + rc, *args)
+COLORS = [
+    (Back.BLACK, Fore.WHITE),
+    (Back.RED, Fore.WHITE),
+    (Back.GREEN, Fore.BLACK),
+    (Back.YELLOW, Fore.BLACK),
+    (Back.BLUE, Fore.YELLOW),
+    (Back.MAGENTA, Fore.BLACK),
+    (Back.CYAN, Fore.BLACK),
+    (Back.WHITE, Fore.BLACK),
+    (Back.BLACK, Fore.WHITE + Style.BRIGHT),
+    (Back.RED, Fore.WHITE + Style.BRIGHT),
+    (Back.GREEN, Fore.WHITE + Style.BRIGHT),
+    (Back.YELLOW, Fore.BLUE),
+    (Back.BLUE, Fore.YELLOW + Style.BRIGHT),
+    (Back.MAGENTA, Fore.WHITE + Style.BRIGHT),
+    (Back.CYAN, Fore.BLUE),
+    (Back.WHITE, Fore.RED),
+]
 
 
 class Robot:
@@ -47,7 +50,7 @@ class Robot:
     turn: Optional[message.Turn]
     turn: Optional[message.Finish]
 
-    def __init__(self, uri=None, name=None, id=None):
+    def __init__(self, uri=None, name=None, idx=None):
         self.uri = uri
         self.name = name if name else names.get_first_name()
         self.queue = []
@@ -56,9 +59,17 @@ class Robot:
         self.turn = None
         self.finish = None
         self.sleep = None
-        self.id = f'{id} ' if id else ''
+        self.idx = idx
 
-    async def run(self, pnum=None, wait=10):
+        if idx is not None:
+            color = COLORS[self.idx % len(COLORS)]
+            self.id_prefix = color[0] + color[1] + \
+                f'{idx:2d} {self.name:10s}' + \
+                COLOR_RESET + ' '
+        else:
+            self.id_prefix = ''
+
+    async def run(self, pnum=None):
 
         session = ClientSession()
         uri = f'http://{settings.SITE_HOST}:{settings.SITE_PORT}/ws'
@@ -73,11 +84,11 @@ class Robot:
         await self.setup()
 
         if pnum:
-            logM(f'Waiting until other {pnum - 1} players connected')
+            self.logM(f'Waiting until other {pnum - 1} players connected')
             while len([p for p, n in self.players.items() if n > 0]) < pnum:
                 await self.wait_msg(message.Prepare)
 
-            logM(f'All players ready - starting the game')
+            self.logM(f'All players ready - starting the game')
             await self.send_msg(message.Play())
 
         await self.play()
@@ -85,11 +96,28 @@ class Robot:
         listener.cancel()
         await session.close()
 
+        return self.finish.results
+
+    def log(self, color, message, *args):
+        log.info(self.id_prefix + color + message + COLOR_RESET, *args)
+
+    def logS(self, message, *args):
+        self.log(COLOR_SERVER, message, *args)
+
+    def logC(self, message, *args):
+        self.log(COLOR_CLIENT, message, *args)
+
+    def logM(self, message, *args):
+        self.log(COLOR_MESSAGE, message, *args)
+
+    def logE(self, message, *args):
+        self.log(COLOR_ERROR, message, *args)
+
     def error(self, message='Unknown error'):
-        logE(f'Error: {message}')
+        self.logE(f'Error: {message}')
 
     async def send_msg(self, msg):
-        logC(f'>> {msg.data()}')
+        self.logC(f'>> {msg.data()}')
         await self.ws.send_json(msg.data())
 
     async def receive(self):
@@ -99,7 +127,7 @@ class Robot:
             if tmsg.type == WSMsgType.text:
                 try:
                     data = json.loads(tmsg.data)
-                    logS(f'<< {data}')
+                    self.logS(f'<< {data}')
                 except Exception as e:
                     self.error(f'Broken message received {e}')
                     continue
@@ -135,7 +163,7 @@ class Robot:
             elif tmsg.type == WSMsgType.error:
                 break
 
-        logE('Websocket closed unexpectedly')
+        self.logE('Websocket closed unexpectedly')
 
         return None
 
@@ -181,10 +209,10 @@ class Robot:
         while not self.finish and await self.wait_msg(message.Turn):
             tour = await self.get_msg_if_any(message.Tour)
             if tour:
-                logM(f'Next Tour #{tour.tour}')
+                self.logM(f'Next Tour #{tour.tour}')
 
             if self.turn.explain == self.name:
-                logM(f'Turn #{self.turn.turn} I am explaining')
+                self.logM(f'Turn #{self.turn.turn} I am explaining')
                 if self.sleep:
                     await sleep(random.uniform(0.2, self.sleep))
 
@@ -212,16 +240,16 @@ class Robot:
                     await self.answer()  # last answer, after timeout
 
             elif self.turn.guess == self.name:
-                logM(f'Turn #{self.turn.turn} I am guessing')
+                self.logM(f'Turn #{self.turn.turn} I am guessing')
                 if self.sleep:
                     await sleep(random.uniform(0.2, self.sleep))
                 await self.send_msg(message.Ready())
                 await self.wait_msg(message.Start)
                 await self.wait_msg(message.Stop)
             else:
-                logM(f'Turn #{self.turn.turn} I am watching')
+                self.logM(f'Turn #{self.turn.turn} I am watching')
 
             if self.finish:
                 break
 
-        logM('Game finished')
+        self.logM('Game finished')
