@@ -10,6 +10,9 @@ settings.log.handlers[0].setFormatter(logging.Formatter('%(message)s', datefmt='
 
 
 def results(res, names=None, prefix=None):
+    if res is None:
+        return
+
     print()
     for h in (('Player', 'Total', 'Explained', 'Guessed'), ('-' * 14, '-' * 9, '-' * 9, '-' * 9)):
         print(f"{h[0]:<14s} {h[1]:>9s} {h[2]:>9s} {h[3]:>9s}")
