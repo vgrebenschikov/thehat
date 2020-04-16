@@ -117,7 +117,7 @@ class Robot:
         self.logE(f'Error: {message}')
 
     async def send_msg(self, msg):
-        self.logC(f'>> {msg.data()}')
+        self.logC(f'>> {json.dumps(msg.data())}')
         await self.ws.send_json(msg.data())
 
     async def receive(self):
@@ -127,7 +127,7 @@ class Robot:
             if tmsg.type == WSMsgType.text:
                 try:
                     data = json.loads(tmsg.data)
-                    self.logS(f'<< {data}')
+                    self.logS(f'<< {tmsg.data}')
                 except Exception as e:
                     self.error(f'Broken message received {e}')
                     continue

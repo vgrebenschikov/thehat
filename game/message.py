@@ -142,9 +142,10 @@ class Game(ServerMessage):
     id: str
     numwords: int
     timer: int
+    state: str
 
-    def __init__(self, id=None, numwords=None, timer=None):
-        super().__init__(id=id, numwords=numwords, timer=timer)
+    def __init__(self, id=None, numwords=None, timer=None, state=None):
+        super().__init__(id=id, numwords=numwords, timer=timer, state=state)
 
 
 class Prepare(ServerMessage):
