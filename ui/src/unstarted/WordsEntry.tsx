@@ -101,6 +101,7 @@ export default class WordsEntry extends React.Component<{datastore?: DataStore},
 
   commitWords = () => {
     this.props.datastore!.sendWords();
+    this.props.datastore!.game?.sendPlay();
   };
 
   render() {

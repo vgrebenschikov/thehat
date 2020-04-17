@@ -9,7 +9,7 @@ import {createBrowserHistory} from "history";
 import {Provider} from "mobx-react";
 import {Router} from "react-router";
 import {createMuiTheme, ThemeProvider} from "@material-ui/core";
-import {green, orange} from "@material-ui/core/colors";
+import {orange} from "@material-ui/core/colors";
 
 const browserHistory = createBrowserHistory({
   basename: '/',

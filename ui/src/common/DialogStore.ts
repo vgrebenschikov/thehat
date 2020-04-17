@@ -1,5 +1,4 @@
 import {action, observable} from "mobx";
-import {FormEvent} from "react";
 
 export class DialogStore {
   @observable isOpen: boolean = false;

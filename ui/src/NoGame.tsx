@@ -25,9 +25,6 @@ const styles = (theme: Theme) => ({
 
 class gameNameStore extends DialogStore {
     @observable name: string = '';
-    constructor(callback: () => void) {
-        super(callback);
-    }
 
     @action.bound
     setName (name: string) {
