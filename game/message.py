@@ -237,7 +237,7 @@ if __name__ == '__main__':
     print('Server Messages:')
 
     server_messages = [
-        Game(id="xxxx-id-here", numwords=10, timer=20),
+        Game(id="xxxx-id-here", numwords=10, timer=20, state='setup'),
         Prepare(players={"user1": 5, "user2": 0, "user3": 6}),
         Wait(),
         Tour(tour=1),
@@ -246,7 +246,7 @@ if __name__ == '__main__':
         Next(word="banana"),
         Explained(word="banana"),
         Missed(),
-        Setup(numwords=7, timer=10)
+        Error(code=123, message='The Error Message')
     ]
 
     smsgs = []
@@ -266,7 +266,8 @@ if __name__ == '__main__':
         Guessed(guessed=True),
         Restart(),
         Reset(),
-        Close()
+        Close(),
+        Setup(numwords=7, timer=10)
     ]
 
     for msg in client_messages:
