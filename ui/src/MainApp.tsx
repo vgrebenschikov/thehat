@@ -1,16 +1,23 @@
-import {Container, createStyles, Drawer, Paper, Theme, Typography, withStyles} from "@material-ui/core";
-import {inject, observer} from 'mobx-react';
 import React from "react";
-import DataStore from "store/DataStore";
-import UIStore from "store/UIStore";
-import UnstartedDrawer from "unstarted/UnstartedDrawer";
-import InGameDrawer from "ingame/InGameDrawer";
+import {Container, createStyles, Drawer, styled, Theme, Typography, withStyles} from "@material-ui/core";
+import {inject, observer} from 'mobx-react';
 import MobxReactRouter from "mobx-react-router";
-import Unstarted from "./unstarted/Unstarted";
+
+import DataStore from "store/DataStore";
+import Game from "store/Game";
+import UIStore from "store/UIStore";
+import {GameState, PlayerRole, PlayerState} from "store/types";
+
+import StatusSurface from "common/StatusBar";
+import UnstartedDrawer from "unstarted/UnstartedDrawer";
+import WordsEntry from "unstarted/WordsEntry";
+import InGameDrawer from "ingame/InGameDrawer";
+import GuesserInterface from "ingame/GuesserInterface";
+import {PleaseWait} from "ingame/PleaseWait";
 
 const SideDrawer = inject('datastore')(observer((props: {datastore?: DataStore}) => {
-    const isStarted = props.datastore?.game?.isStarted();
-    return isStarted ? <InGameDrawer/> : <UnstartedDrawer/>;
+    const isConfig = props.datastore?.game?.gameState === GameState.SETUP;
+    return isConfig ? <UnstartedDrawer/> : <InGameDrawer/>;
 }));
 
 const styles = (theme: Theme) => createStyles({
@@ -25,6 +32,34 @@ const styles = (theme: Theme) => createStyles({
     },
 });
 
+const StatusBar = inject('datastore')(observer((props: {datastore?: DataStore}) => {
+    const {game} = props.datastore!;
+    let status = `GS: ${game?.gameState}, PS: ${game?.myState}, PR: ${game?.myRole}`;
+    return <StatusSurface>
+        <Typography variant="h6">{status}</Typography>
+    </StatusSurface>;
+}));
+
+const MainContainer = styled(Container)(({theme}) => ({
+    flexGrow: 1,
+    display: "flex",
+    flexDirection: 'column',
+})) as typeof Container;
+
+const GameContent = observer((props: {game: Game}) => {
+    const {game} = props;
+    if (game.myState === PlayerState.WORDS) {
+        return <WordsEntry/>;
+    }
+    if (game.myState === PlayerState.WAIT) {
+        return <PleaseWait/>;
+    }
+    if (game.myRole !== PlayerRole.WATCHER) {
+        return <GuesserInterface/>;
+    }
+    return null;
+});
+
 interface MainAppProps {
     datastore?: DataStore;
     uistore?: UIStore;
@@ -32,16 +67,6 @@ interface MainAppProps {
     match: any;
     classes: any;
 }
-
-const StatusBar = withStyles(styles)(inject('datastore')(observer((props: {datastore?: DataStore, classes: any}) => {
-    return <Paper className={props.classes.statusBar}>
-        <Typography variant="h6">
-            {props.datastore?.game?.isStarted()
-              ? "Играем!"
-              : "Добавить слова в шляпу"}
-        </Typography>
-    </Paper>;
-})));
 
 @inject('datastore','uistore','routing')
 @observer
@@ -51,24 +76,16 @@ class MainApp extends React.Component<MainAppProps, {}> {
         props.datastore?.joinGame(props.match.params.gameId);
     }
 
-    leaveGame = async () => {
-        await this.props.datastore?.leaveGame();
-        this.props.routing!.push('/');
-    };
-
     render() {
         const { datastore, uistore, classes } = this.props;
-        if (!datastore!.game?.data) {
-            return null;
-        }
         return <>
             <StatusBar/>
-            <Container>
-                {datastore!.game?.isStarted() ? null : <Unstarted/>}
+            <MainContainer>
+                {datastore!.game && <GameContent game={datastore!.game}/>}
                 <Drawer classes={{paper:classes.drawer}} anchor="left" open={uistore!.drawerOpen} onClose={()=>uistore!.setDrawerOpen(false)}>
                     <SideDrawer/>
                 </Drawer>
-            </Container>
+            </MainContainer>
         </>;
     }
 }

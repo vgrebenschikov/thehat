@@ -8,6 +8,8 @@ import {RouterStore, syncHistoryWithStore} from "mobx-react-router";
 import {createBrowserHistory} from "history";
 import {Provider} from "mobx-react";
 import {Router} from "react-router";
+import {createMuiTheme, ThemeProvider} from "@material-ui/core";
+import {green, orange} from "@material-ui/core/colors";
 
 const browserHistory = createBrowserHistory({
   basename: '/',
@@ -15,13 +17,22 @@ const browserHistory = createBrowserHistory({
 const routingStore = new RouterStore();
 const history = syncHistoryWithStore(browserHistory, routingStore);
 
+const theme = createMuiTheme({
+  palette: {
+    primary: {main: '#43a047'},
+    secondary: orange,
+  },
+});
+
 ReactDOM.render(
   <React.StrictMode>
-    <Provider routing={routingStore}>
-      <Router history={history}>
-        <App />
-      </Router>
-    </Provider>
+    <ThemeProvider theme={theme}>
+      <Provider routing={routingStore}>
+        <Router history={history}>
+          <App />
+        </Router>
+      </Provider>
+    </ThemeProvider>
   </React.StrictMode>,
   document.getElementById('root')
 );
