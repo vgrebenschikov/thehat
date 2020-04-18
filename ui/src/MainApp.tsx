@@ -10,7 +10,6 @@ import WordsEntry from "unstarted/WordsEntry";
 import GuesserInterface from "ingame/GuesserInterface";
 import {MidCard} from "common/Card";
 import ExplainerInterface from "ingame/ExplainerInterface";
-import UIStore from "store/UIStore";
 import tourDescripton from "tourDescription";
 import TurnChangeDialog from "TurnChangeDialog";
 
