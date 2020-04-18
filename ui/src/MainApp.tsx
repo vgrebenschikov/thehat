@@ -60,7 +60,6 @@ const GameContent = observer((props: {game: Game}) => {
 
 interface MainAppProps {
     datastore?: DataStore;
-    uistore?: UIStore;
     match: any;
 }
 
