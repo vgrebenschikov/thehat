@@ -2,6 +2,7 @@ import {action, observable} from 'mobx';
 import {User} from 'firebase';
 import WebSocketConnection from "./WebSocketConnection";
 import {GameState, PlayerRole, PlayerState} from "./types";
+import UIStore from './UIStore';
 
 export interface Player {
     name: string;
@@ -31,10 +32,11 @@ export default class Game {
 
     private ws: WebSocketConnection;
     private readonly commands: {[k: string]: (data: any) => void};
+    private uistore: UIStore;
 
     user: Player;
 
-    constructor(name: string, user: User, ws: WebSocketConnection) {
+    constructor(name: string, user: User, ws: WebSocketConnection, uistore: UIStore) {
         this.commands = {
             game: this.cmdGame,
             prepare: this.cmdPrepare,
@@ -50,6 +52,7 @@ export default class Game {
             error: this.cmdError,
         };
         this.id = name;
+        this.uistore = uistore;
         this.ws = ws;
         this.ws.subscribeReceiver(this.onMessageReceived);
         this.user = { name: user.displayName || 'Unknown', uid: user.uid, done: false };
@@ -142,6 +145,7 @@ export default class Game {
     cmdTour (data: any) {
         this.tourNumber = data.tour === undefined ? null : data.tour;
         this.gameState = GameState.PLAY;
+        this.uistore.setTourDialogOpen(true);
     };
 
     @action.bound

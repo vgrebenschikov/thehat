@@ -8,8 +8,8 @@ import TopBar from "./TopBar";
 import {Route, Switch} from "react-router";
 import {Box, styled} from "@material-ui/core";
 
-let store = new DataStore();
 let uistore = new UIStore();
+let store = new DataStore(uistore);
 
 const FullScreen = styled(Box)(({theme}) => ({
   height: '100vh',

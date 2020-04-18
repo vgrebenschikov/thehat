@@ -10,12 +10,9 @@ import WordsEntry from "unstarted/WordsEntry";
 import GuesserInterface from "ingame/GuesserInterface";
 import {MidCard} from "common/Card";
 import ExplainerInterface from "ingame/ExplainerInterface";
-
-const tourDescripton = [
-  'Первый тур: Объясняем словами и жестами',
-  'Второй тур: Одним словом и жестами',
-  'Третий тур: Объясняем только жестами',
-];
+import UIStore from "store/UIStore";
+import tourDescripton from "tourDescription";
+import TurnChangeDialog from "TurnChangeDialog";
 
 const StatusSurface = styled(Paper)({
     padding: '8px',
@@ -63,6 +60,7 @@ const GameContent = observer((props: {game: Game}) => {
 
 interface MainAppProps {
     datastore?: DataStore;
+    uistore?: UIStore;
     match: any;
 }
 
@@ -81,6 +79,7 @@ export default class MainApp extends React.Component<MainAppProps, {}> {
             <MainContainer>
                 {datastore!.game && <GameContent game={datastore!.game}/>}
             </MainContainer>
+            <TurnChangeDialog/>
         </>;
     }
 }
