@@ -10,12 +10,8 @@ import WordsEntry from "unstarted/WordsEntry";
 import GuesserInterface from "ingame/GuesserInterface";
 import {MidCard} from "common/Card";
 import ExplainerInterface from "ingame/ExplainerInterface";
-
-const tourDescripton = [
-  'Первый тур: объясняем как можем',
-  'Второй тур: Одним словом и жестами',
-  'Третий тур: Объясняем только жестами',
-];
+import tourDescripton from "tourDescription";
+import TurnChangeDialog from "TurnChangeDialog";
 
 const StatusSurface = styled(Paper)({
     padding: '8px',
@@ -81,6 +77,7 @@ export default class MainApp extends React.Component<MainAppProps, {}> {
             <MainContainer>
                 {datastore!.game && <GameContent game={datastore!.game}/>}
             </MainContainer>
+            <TurnChangeDialog/>
         </>;
     }
 }

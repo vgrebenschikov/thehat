@@ -6,6 +6,7 @@ import {action, computed, observable, runInAction} from "mobx";
 import Game from "./Game";
 import firebaseConfig from 'firebase-config';
 import WebSocketConnection from "./WebSocketConnection";
+import UIStore from "store/UIStore";
 
 export default class DataStore {
     @observable user: User | null = null;
@@ -18,6 +19,8 @@ export default class DataStore {
 
     @observable websocket: WebSocketConnection = new WebSocketConnection();
 
+    private uistore: UIStore;
+
     @computed
     get currentGame() {
         if (this.game === null) {
@@ -26,7 +29,8 @@ export default class DataStore {
         return this.game.id;
     };
 
-    constructor() {
+    constructor(uistore: UIStore) {
+        this.uistore = uistore;
         this.websocket.establishConnection();
         this.websocket.subscribeReceiver(this.onWebsocketMessage);
         firebase.initializeApp(firebaseConfig);
@@ -45,7 +49,7 @@ export default class DataStore {
 
     joinGame = action((name: string) => {
         if (this.game?.id !== name) {
-            this.game = new Game(name, this.user!, this.websocket);
+            this.game = new Game(name, this.user!, this.websocket, this.uistore);
         }
     });
 
