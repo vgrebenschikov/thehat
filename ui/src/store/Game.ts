@@ -80,6 +80,8 @@ export default class Game {
             cmd: 'name',
             name: this.user.name,
         });
+        this.tourNumber = null;
+        this.turnNumber = null;
     };
 
     @action.bound
@@ -107,6 +109,17 @@ export default class Game {
     }
 
     @action.bound
+    sendGuessed(correctly: boolean) {
+        this.ws.send({
+            cmd: 'guessed',
+            guessed: correctly,
+        });
+        if (this.myState === PlayerState.LAST_ANSWER) {
+            this.myState = PlayerState.FINISH;
+        }
+    }
+
+    @action.bound
     cmdGame (data: any) {
         this.serverGameId = data.id || null;
         this.gameNumWords = data.numwords || null;
@@ -127,7 +140,7 @@ export default class Game {
 
     @action.bound
     cmdTour (data: any) {
-        this.tourNumber = data.tour || null;
+        this.tourNumber = data.tour === undefined ? null : data.tour;
         this.gameState = GameState.PLAY;
     };
 
@@ -178,7 +191,12 @@ export default class Game {
 
     @action.bound
     cmdStop (data: any) {
-        this.myState = PlayerState.LAST_ANSWER;
+        if (data.reason === 'timer') {
+            this.myState = PlayerState.LAST_ANSWER;
+        } else {
+            // reason = empty
+            this.myState = PlayerState.FINISH;
+        }
     };
 
     @action.bound
