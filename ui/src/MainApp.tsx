@@ -12,7 +12,7 @@ import {MidCard} from "common/Card";
 import ExplainerInterface from "ingame/ExplainerInterface";
 
 const tourDescripton = [
-  'Первый тур: объясняем как можем',
+  'Первый тур: Объясняем словами и жестами',
   'Второй тур: Одним словом и жестами',
   'Третий тур: Объясняем только жестами',
 ];
