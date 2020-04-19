@@ -35,20 +35,21 @@ async def main():
         pnum = int(sys.argv[1])
         r = Robot(uri=uri, idx=0)
         rbs = [r]
+        gid = await r.newgame(name='Secret Tea', timer=1)
         wrk = [ensure_future(r.run(pnum=pnum))]
 
         await sleep(0.2)  # Leader process should be able to reset game
 
         for i in range(1, pnum):
-            r = Robot(uri=uri, idx=i)
+            r = Robot(uri=uri, idx=i, id=gid)
             rbs.append(r)
             wrk.append(ensure_future(r.run()))
 
         await gather(*wrk)
-        results(wrk[0].result(), [r.name for r in rbs], [r.id_prefix for r in rbs])
+        results(wrk[0].result(), [r.pname for r in rbs], [r.id_prefix for r in rbs])
 
     elif len(sys.argv) == 2:
-        r = Robot(uri=uri)
+        r = Robot(uri=uri, id="00000000-0000-0000-0000-000000000000")
         res = await r.run(pnum=int(sys.argv[1]))
         results(res)
 

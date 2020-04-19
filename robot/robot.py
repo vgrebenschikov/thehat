@@ -50,9 +50,9 @@ class Robot:
     turn: Optional[message.Turn]
     turn: Optional[message.Finish]
 
-    def __init__(self, uri=None, name=None, idx=None):
+    def __init__(self, uri=None, idx=None, id=None):
         self.uri = uri
-        self.name = name if name else names.get_first_name()
+        self.pname = names.get_first_name()
         self.queue = []
         self.players = {}
         self.tour = None
@@ -60,24 +60,38 @@ class Robot:
         self.finish = None
         self.sleep = None
         self.idx = idx
+        self.id = id
+        self.just_created = False
+
+        self.uri = f'http://{settings.SITE_HOST}:{settings.SITE_PORT}'
 
         if idx is not None:
             color = COLORS[self.idx % len(COLORS)]
             self.id_prefix = color[0] + color[1] + \
-                f'{idx:2d} {self.name:10s}' + \
+                f'{idx:2d} {self.pname:10s}' + \
                 COLOR_RESET + ' '
         else:
             self.id_prefix = ''
 
-    async def run(self, pnum=None):
-
+    async def newgame(self, name=None, numwords=6, timer=1):
         session = ClientSession()
-        uri = f'http://{settings.SITE_HOST}:{settings.SITE_PORT}/ws'
-        self.ws = await session.ws_connect(uri)
+        ng = message.Newgame(name=name, timer=timer)
+        resp = await session.post(f'{self.uri}/games', data=json.dumps(ng.data()))
+        gm = message.Game().msg(await resp.json())
+        self.id = gm.id
+        self.name = gm.name
+        self.just_created = True
+        await session.close()
+        return self.id
+
+    async def run(self, pnum=None):
+        session = ClientSession()
+
+        self.ws = await session.ws_connect(f'{self.uri}/ws/{self.id}')
 
         listener = ensure_future(self.receive())
 
-        if pnum:
+        if pnum and not self.just_created:
             await self.send_msg(message.Reset())
             await self.send_msg(message.Setup(numwords=6, timer=1))
 
@@ -193,7 +207,7 @@ class Robot:
         return None
 
     async def setup(self):
-        await self.send_msg(message.Name(name=self.name))
+        await self.send_msg(message.Name(name=self.pname))
         g = await self.wait_msg(message.Game)
         ww = []
         for wi in range(0, g.numwords):
@@ -212,7 +226,7 @@ class Robot:
             if tour:
                 self.logM(f'Next Tour #{tour.tour}')
 
-            if self.turn.explain == self.name:
+            if self.turn.explain == self.pname:
                 self.logM(f'Turn #{self.turn.turn} I am explaining')
                 if self.sleep:
                     await sleep(random.uniform(0.2, self.sleep))
@@ -240,7 +254,7 @@ class Robot:
                 if st.reason == 'timer':
                     await self.answer()  # last answer, after timeout
 
-            elif self.turn.guess == self.name:
+            elif self.turn.guess == self.pname:
                 self.logM(f'Turn #{self.turn.turn} I am guessing')
                 if self.sleep:
                     await sleep(random.uniform(0.2, self.sleep))

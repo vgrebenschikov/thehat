@@ -1,10 +1,11 @@
+from abc import ABC
 import json
 import sys
 
 from typing import (List, Dict, get_type_hints)
 
 
-class Message(object):
+class Message(ABC):
     """API Base Message, abstract class"""
 
     def __init__(self, **kwargs):
@@ -17,37 +18,68 @@ class Message(object):
 
     def __eq__(self, other):
         return type(self) == type(other) and \
-               all(getattr(self,p) == getattr(other, p) for p in self._get_attributes())
+            all(getattr(self, p) == getattr(other, p) for p in self._get_attributes())
 
     @classmethod
     def msg(cls, data):
-        if 'cmd' not in data:
-            raise ValueError(f'cmd is not specified')
-        cmd = data['cmd']
-        mcls = getattr(sys.modules[__name__], cmd.title())
+        if ABC in cls.__bases__:
+            if 'cmd' not in data:
+                raise ValueError(f'cmd is not specified')
+            cmd = data['cmd']
+            mcls = getattr(sys.modules[__name__], cmd.title())
 
-        if not issubclass(mcls, cls):
-            raise ValueError(f"Unknown command '{cmd}'")
+            if not issubclass(mcls, cls):
+                raise ValueError(f"Unknown command '{cmd}'")
 
-        del data['cmd']
+            del data['cmd']
+        else:
+            if 'cmd' in data:
+                cmd = data['cmd']
+                if cls.__name__.lower() != cmd:
+                    raise ValueError(f"Sent command '{cmd}' does not match required class {cls.__name__}")
+
+                del data['cmd']
+            mcls = cls
+
         return mcls(**data)  # noqa
 
     def _get_attributes(self):
         return [p for p in get_type_hints(self.__class__)]
 
-    def data(self):
-        ret = {'cmd': self.__class__.__name__.lower()}
+    def args(self):
+        ret = {}
         for pn in self._get_attributes():
             ret[pn] = getattr(self, pn)
+        return ret
 
+    def data(self):
+        ret = {'cmd': self.__class__.__name__.lower(), **self.args()}
         return ret
 
 
-class ClientMessage(Message):
+class ClientMessage(Message, ABC):
     """Abstract base class for client messages"""
 
     def __init__(self, **args):
         super().__init__(**args)
+
+
+class ServerMessage(Message, ABC):
+    """Abstract base class for server messages"""
+
+    def __init__(self, **args):
+        super().__init__(**args)
+
+
+class Newgame(ClientMessage):
+    """Client creates new game"""
+
+    name: str
+    numwords: int
+    timer: int
+
+    def __init__(self, name=None, numwords=None, timer=None):
+        super().__init__(name=name, numwords=numwords, timer=timer)
 
 
 class Name(ClientMessage):
@@ -72,16 +104,12 @@ class Words(ClientMessage):
 
 class Play(ClientMessage):
     """Start game - all players onboard"""
-
-    def __init__(self):
-        super().__init__()
+    pass
 
 
 class Ready(ClientMessage):
     """Client ready for it's turn, sent by both who guess and who explains"""
-
-    def __init__(self):
-        super().__init__()
+    pass
 
 
 class Guessed(ClientMessage):
@@ -95,37 +123,28 @@ class Guessed(ClientMessage):
 
 class Restart(ClientMessage):
     """Restart game message, all clients are still here"""
-    def __init__(self):
-        super().__init__()
+    pass
 
 
 class Reset(ClientMessage):
     """Reset game message, all clients disconnected (except myself)"""
-    def __init__(self):
-        super().__init__()
+    pass
 
 
 class Close(ClientMessage):
     """Gracefully close connection"""
-    def __init__(self):
-        super().__init__()
+    pass
 
 
 class Setup(ClientMessage):
     """Setup Game"""
 
+    name: str
     numwords: int
     timer: int
 
-    def __init__(self, numwords=None, timer=None):
-        super().__init__(numwords=numwords, timer=timer)
-
-
-class ServerMessage(Message):
-    """Abstract base class for server messages"""
-
-    def __init__(self, **args):
-        super().__init__(**args)
+    def __init__(self, name=None, numwords=None, timer=None):
+        super().__init__(name=name, numwords=numwords, timer=timer)
 
 
 class Error(ServerMessage):
@@ -140,12 +159,13 @@ class Error(ServerMessage):
 class Game(ServerMessage):
     """Game information before start"""
     id: str
+    name: str
     numwords: int
     timer: int
     state: str
 
-    def __init__(self, id=None, numwords=None, timer=None, state=None):
-        super().__init__(id=id, numwords=numwords, timer=timer, state=state)
+    def __init__(self, id=None, name=None, numwords=None, timer=None, state=None):
+        super().__init__(id=id, name=name, numwords=numwords, timer=timer, state=state)
 
 
 class Prepare(ServerMessage):
@@ -159,9 +179,7 @@ class Prepare(ServerMessage):
 
 class Wait(ServerMessage):
     """Response on attempt to start game when not all players set words"""
-
-    def __init__(self):
-        super().__init__()
+    pass
 
 
 class Tour(ServerMessage):
@@ -186,8 +204,7 @@ class Turn(ServerMessage):
 
 class Start(ServerMessage):
     """Start message when both players are ready"""
-    def __init__(self):
-        super().__init__()
+    pass
 
 
 class Next(ServerMessage):
@@ -210,9 +227,7 @@ class Explained(ServerMessage):
 
 class Missed(ServerMessage):
     """Failure on word explanation by pair"""
-
-    def __init__(self):
-        super().__init__()
+    pass
 
 
 class Stop(ServerMessage):
@@ -237,7 +252,7 @@ if __name__ == '__main__':
     print('Server Messages:')
 
     server_messages = [
-        Game(id="xxxx-id-here", numwords=10, timer=20, state='setup'),
+        Game(id="xxxx-id-here", name='Secret Tea', numwords=10, timer=20, state='setup'),
         Prepare(players={"user1": 5, "user2": 0, "user3": 6}),
         Wait(),
         Tour(tour=1),
@@ -259,6 +274,7 @@ if __name__ == '__main__':
     print('Client Messages:')
 
     client_messages = [
+        Newgame(name='Secret Tea', numwords=6, timer=20),
         Name(name='vova'),
         Words(words=["apple", "orange", "banana"]),
         Play(),
@@ -267,7 +283,7 @@ if __name__ == '__main__':
         Restart(),
         Reset(),
         Close(),
-        Setup(numwords=7, timer=10)
+        Setup(name='Secret Tea', numwords=7, timer=10)
     ]
 
     for msg in client_messages:

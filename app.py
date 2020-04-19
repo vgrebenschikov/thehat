@@ -2,7 +2,7 @@
 from aiohttp import web
 
 import settings
-from game.views import Login, Words, WebSocket
+from game.views import NewGame, Login, WebSocket
 from game.hat import HatGame
 
 
@@ -20,13 +20,19 @@ async def shutdown(server, app, handler):
 
 app = web.Application()
 app.websockets = []
-app.game = HatGame()
+app.games = {}
+
+# default game, temporary, hackish
+default_id = '00000000-0000-0000-0000-000000000000'
+app.games[default_id] = HatGame(name='Secret Tea')
+app.games[default_id].id = default_id
 
 app.add_routes((
     web.get('/', Login, name='login'),
-    web.post('/words', Words, name='words'),
-    web.get('/ws', WebSocket, name='game')
+    web.post('/games', NewGame, name='new_game'),
+    web.get('/ws/{id}', WebSocket, name='game'),
+    web.get('/ws', WebSocket),  # default game
 ))
-
+web.get('/ws', WebSocket, name='game')
 if __name__ == '__main__':
     web.run_app(app, host=settings.SITE_HOST, port=settings.SITE_PORT)

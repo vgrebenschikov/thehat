@@ -1,24 +1,38 @@
 from aiohttp import web, WSMsgType
+
 from settings import log
 from . import message
+from .hat import HatGame
 
 import json
 
 
-class Login(web.View):
-    async def get(self):
-        ret = {
-            'num_players': len(self.request.app.game.players_map),
-            'players': list(self.request.app.game.players_map.keys())
-        }
-        return web.Response(
-            content_type="application/json",
-            text=json.dumps(ret, indent=4))
-
-
-class Words(web.View):
+class NewGame(web.View):
     async def post(self):
-        print('Words')
+        ngmsg = message.Newgame.msg(await self.request.json())
+        game = HatGame(**ngmsg.args())
+
+        log.debug(f'New game request - {ngmsg.args()}')
+
+        if game.id in self.request.app.games:
+            return web.Response(
+                status=500,
+                content_type='application/json',
+                text=json.dumps(message.Error(code=103, message='Duplicate game ID').data())
+            )
+
+        self.request.app.games[game.id] = game
+
+        log.info(f"New game created id={game.id}, name='{game.name}''")
+
+        return web.Response(
+            content_type='application/json',
+            text=json.dumps(game.game_msg().data()))
+
+
+class Login(web.View):
+    async def post(self):
+        print('Login')
         return "xxxx"
 
 
@@ -28,9 +42,20 @@ class WebSocket(web.View):
         await ws.send_json(message.Error(code=code, message=msg).data())
 
     async def get(self):
-        log.debug('websocket new connection')
-        ws = web.WebSocketResponse()
+        gid = self.request.match_info['id']
+        if gid == 'None':  # Do not ask - if parameter not found, string 'None' returned
+            gid = '00000000-0000-0000-0000-000000000000'
+        log.debug(f'websocket new connection for game #{gid}')
 
+        try:
+            game = self.request.app.games[gid]
+        except KeyError:
+            return web.Response(
+                content_type='application/json',
+                text=str(message.Error(code=100, message=f'Game with ID {gid} is unknown'))
+            )
+
+        ws = web.WebSocketResponse()
         self.request.app.websockets.append(ws)
 
         await ws.prepare(self.request)
@@ -50,7 +75,7 @@ class WebSocket(web.View):
                 else:
                     cmdtxt = data['cmd']
 
-                cmd = getattr(self.request.app.game, cmdtxt, None)
+                cmd = getattr(game, cmdtxt, None)
                 if not callable(cmd):
                     await self.error(ws, 103, f'Unknown command {cmdtxt}')
                     continue

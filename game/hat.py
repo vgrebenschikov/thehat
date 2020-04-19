@@ -19,6 +19,8 @@ class HatGame:
     ST_PLAY = 'play'
     ST_FINISH = 'finish'
 
+    id: str
+    game_name: str
     players: PlayerList
     players_map: PlayerDict
     sockets_map: PlayerDict
@@ -32,7 +34,7 @@ class HatGame:
     tour_words: List[str]
     missed_words: List[str]
 
-    def __init__(self):
+    def __init__(self, name=None, numwords=6, timer=20):
         self.players = []
         self.players_map = {}
         self.sockets_map = {}
@@ -40,10 +42,11 @@ class HatGame:
         self.tour_words = []
         self.missed_words = []
         self.id = str(uuid.uuid4())
+        self.game_name = name or self.id
         self.state = HatGame.ST_SETUP
         self.shlyapa = None
-        self.num_words = 6
-        self.turn_timer = 20  # in seconds
+        self.num_words = numwords or 6
+        self.turn_timer = timer or 20  # in seconds
         self.cur_pair = None
         self.cur_word = None
         self.cur_guessed = None
@@ -97,15 +100,18 @@ class HatGame:
                     guess=self.cur_pair.guessing.name
                 ).data())
 
+    def game_msg(self):
+        return message.Game(
+            id=self.id,
+            name=self.game_name,
+            numwords=self.num_words,
+            timer=self.turn_timer,
+            state=self.state
+        )
+
     async def game(self, ws):
         """Notify just known Player about Game layout"""
-        await ws.send_json(
-            message.Game(
-                id=self.id,
-                numwords=self.num_words,
-                timer=self.turn_timer,
-                state=self.state
-            ).data())
+        await ws.send_json(self.game_msg().data())
 
     async def words(self, ws, msg: message.Words):
         """Player sends it's words to server"""
@@ -117,15 +123,11 @@ class HatGame:
         await self.prepare()
 
     async def setup(self, ws, msg: message.Setup):
-        self.num_words = msg.numwords
-        self.turn_timer = msg.timer
+        self.game_name = msg.name or self.game_name
+        self.num_words = msg.numwords or self.num_words
+        self.turn_timer = msg.timer or self.turn_timer
 
-        await self.broadcast(message.Game(
-            id=self.id,
-            numwords=self.num_words,
-            timer=self.turn_timer,
-            state=self.state
-        ))
+        await self.broadcast(self.game_msg())
 
     async def prepare(self, ws=None):
         """Notify All Players about changed set of players"""
@@ -218,6 +220,8 @@ class HatGame:
                 for p in self.players:
                     """Reset players to ask new words"""
                     p.reset()   # noqa
+
+                log.debug('Game finished')
 
                 return
 
@@ -363,7 +367,6 @@ class HatGame:
         self.all_words = []
         self.tour_words = []
         self.missed_words = []
-        self.id = str(uuid.uuid4())
         self.state = HatGame.ST_SETUP
         self.shlyapa = None
         self.cur_pair = None
@@ -374,12 +377,7 @@ class HatGame:
         for p in self.players:
             p.reset()
 
-        await self.broadcast(message.Game(
-            id=self.id,
-            numwords=self.num_words,
-            timer=self.turn_timer,
-            state=self.state
-        ))
+        await self.broadcast(self.game_msg())
 
     async def reset(self, ws, msg: message.Restart):
         """Reset the game - disconnect all users except me"""
