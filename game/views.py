@@ -30,6 +30,26 @@ class NewGame(web.View):
             text=json.dumps(game.game_msg().data()))
 
 
+class GetGame(web.View):
+    async def get(self):
+        gid = self.request.match_info['id']
+        log.debug(f'Get game request - {gid}')
+
+        try:
+            game = self.request.app.games[gid]
+        except KeyError:
+            return web.Response(
+                content_type='application/json',
+                text=str(message.Error(code=100, message=f'Game with ID {gid} is unknown'))
+            )
+
+        log.info(f"Game id={game.id}, name='{game.name}''")
+
+        return web.Response(
+            content_type='application/json',
+            text=json.dumps(game.game_msg().data()))
+
+
 class Login(web.View):
     async def post(self):
         print('Login')

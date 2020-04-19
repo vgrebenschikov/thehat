@@ -2,7 +2,7 @@
 from aiohttp import web
 
 import settings
-from game.views import NewGame, Login, WebSocket
+from game.views import NewGame, GetGame, Login, WebSocket
 from game.hat import HatGame
 
 
@@ -29,6 +29,7 @@ app.games[default_id].id = default_id
 
 app.add_routes((
     web.get('/', Login, name='login'),
+    web.get('/games/{id}', GetGame, name='get_game'),
     web.post('/games', NewGame, name='new_game'),
     web.get('/ws/{id}', WebSocket, name='game'),
     web.get('/ws', WebSocket),  # default game
