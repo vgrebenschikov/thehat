@@ -62,7 +62,7 @@ class WebSocket(web.View):
         await ws.send_json(message.Error(code=code, message=msg).data())
 
     async def get(self):
-        gid = self.request.match_info['id']
+        gid = self.request.match_info.get('id', '00000000-0000-0000-0000-000000000000')
         if gid == 'None':  # Do not ask - if parameter not found, string 'None' returned
             gid = '00000000-0000-0000-0000-000000000000'
         log.debug(f'websocket new connection for game #{gid}')
