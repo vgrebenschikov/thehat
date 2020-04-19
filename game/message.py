@@ -267,7 +267,7 @@ if __name__ == '__main__':
     smsgs = []
     for msg in server_messages:
         msg2 = ServerMessage.msg(json.loads(str(msg)))
-        print(f'>> {type(msg).__name__} \t{msg}')
+        print(f'>> {type(msg).__name__:12} {msg}')
         assert msg == msg2
 
     print()
@@ -288,5 +288,5 @@ if __name__ == '__main__':
 
     for msg in client_messages:
         msg2 = ClientMessage.msg(json.loads(str(msg)))
-        print(f'<< {type(msg).__name__} \t{msg}')
+        print(f'<< {type(msg).__name__:12} {msg}')
         assert msg == msg2
