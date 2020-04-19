@@ -3,3 +3,4 @@ transitions>=0.8.1
 names>=0.3.0
 envparse
 pyyaml>=5.3.0
+colorama>=0.4.3
