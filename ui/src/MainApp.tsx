@@ -1,5 +1,5 @@
 import React from "react";
-import {Container, Paper, styled, Typography} from "@material-ui/core";
+import {Button, Container, Paper, styled, Typography} from "@material-ui/core";
 import {inject, observer} from 'mobx-react';
 
 import DataStore from "store/DataStore";
@@ -12,6 +12,7 @@ import {MidCard} from "common/Card";
 import ExplainerInterface from "ingame/ExplainerInterface";
 import tourDescripton from "tourDescription";
 import TurnChangeDialog from "TurnChangeDialog";
+import {ConnectionStatus} from "./store/WebSocketConnection";
 
 const StatusSurface = styled(Paper)({
     padding: '8px',
@@ -57,6 +58,30 @@ const GameContent = observer((props: {game: Game}) => {
     return null;
 });
 
+@inject('datastore')
+@observer
+class BadWebsocket extends React.Component<{datastore?: DataStore}, any> {
+    render_reconnecting() {
+        return <Typography className="centered" variant="body1">Нет связи, пытаемся пробиться...</Typography>;
+    }
+    render_disconnected() {
+        const {websocket} = this.props.datastore!;
+        return <>
+            <Typography className="content" variant="body1">Всё пропало! Попробуем ещё?</Typography><br/>
+            <Button className="content" variant="contained" onClick={() => websocket.reconnectManually()}>ОК</Button>
+        </>;
+    }
+    render() {
+        const {websocket} = this.props.datastore!;
+        return <MidCard>
+            {websocket.connectionStatus === ConnectionStatus.Disconnected ?
+              this.render_disconnected() :
+              this.render_reconnecting()
+            }
+        </MidCard>;
+    }
+}
+
 interface MainAppProps {
     datastore?: DataStore;
     match: any;
@@ -72,6 +97,12 @@ export default class MainApp extends React.Component<MainAppProps, {}> {
 
     render() {
         const { datastore } = this.props;
+        if (datastore!.websocket.connectionStatus === ConnectionStatus.Disconnected
+            || datastore!.websocket.connectionStatus === ConnectionStatus.Retrying) {
+            return <MainContainer>
+                <BadWebsocket/>
+            </MainContainer>;
+        }
         return <>
             <StatusBar/>
             <MainContainer>
