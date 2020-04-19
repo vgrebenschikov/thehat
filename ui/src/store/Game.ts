@@ -1,6 +1,6 @@
 import {action, observable} from 'mobx';
 import {User} from 'firebase';
-import WebSocketConnection from "./WebSocketConnection";
+import WebSocketConnection, {ConnectionStatus} from "./WebSocketConnection";
 import {GameState, PlayerRole, PlayerState} from "./types";
 import UIStore from './UIStore';
 
@@ -57,7 +57,10 @@ export default class Game {
         this.ws.subscribeReceiver(this.onMessageReceived);
         this.user = { name: user.displayName || 'Unknown', uid: user.uid, done: false };
         setInterval(this.updateTimeLeft, 1000);
-        this.connect();
+        if (this.ws.connectionStatus === ConnectionStatus.Established) {
+            // Otherwise, connect() will be called when connection is established.
+            this.connect();
+        }
     }
 
     onMessageReceived = (data: any) => {

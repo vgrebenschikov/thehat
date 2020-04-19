@@ -1,6 +1,6 @@
 import {action, observable} from 'mobx';
 
-enum ConnectionStatus {
+export enum ConnectionStatus {
   Disconnected = "Disconnected",
   Connecting = "Connecting",
   Retrying = "Retrying",
@@ -24,7 +24,8 @@ export default class WebSocketConnection {
 
     @action reconnect = () => {
       this.connectionStatus = ConnectionStatus.Connecting;
-      const wsUri = process.env.NODE_ENV === 'development' ? `ws:${window.location.hostname}:8088/ws`: `ws:${window.location.host}/ws`;
+      const wsProto = window.location.protocol === 'https' ? 'wss' : 'ws';
+      const wsUri = process.env.NODE_ENV === 'development' ? `ws:${window.location.hostname}:8088/ws`: `${wsProto}:${window.location.host}/ws`;
       this.ws = new WebSocket(wsUri);
       this.ws.addEventListener('open', this.onOpen);
       this.ws.addEventListener('message', this.onMessage);
