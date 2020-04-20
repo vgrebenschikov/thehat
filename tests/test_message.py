@@ -12,7 +12,8 @@ class TestServerMessage(TestCase):
         assert g.numwords == 10
         assert g.timer == 20
         assert g.state == 'setup'
-        assert str(g) == '{"cmd": "game", "id": "xxxx-id-here", "name": "Secret Tea", "numwords": 10, "timer": 20, "state": "setup"}'
+        assert str(g) == \
+            '{"cmd": "game", "id": "xxxx-id-here", "name": "Secret Tea", "numwords": 10, "timer": 20, "state": "setup"}'
 
     def test_game_from_json(self):
         s = '{"cmd": "game", "id": "xxxx-id-here", "name": "Secret Tea", "numwords": 10, "timer": 20, "state": "setup"}'
