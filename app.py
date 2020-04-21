@@ -34,6 +34,6 @@ app.add_routes((
     web.get('/ws/{id}', WebSocket, name='game'),
     web.get('/ws', WebSocket),  # default game
 ))
-web.get('/ws', WebSocket, name='game')
+
 if __name__ == '__main__':
     web.run_app(app, host=settings.SITE_HOST, port=settings.SITE_PORT)

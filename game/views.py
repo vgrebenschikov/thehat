@@ -33,17 +33,17 @@ class NewGame(web.View):
 class GetGame(web.View):
     async def get(self):
         gid = self.request.match_info['id']
-        log.debug(f'Get game request - {gid}')
 
         try:
             game = self.request.app.games[gid]
         except KeyError:
+            log.info(f"Get Game id={gid} - not found")
             return web.Response(
                 content_type='application/json',
                 text=str(message.Error(code=100, message=f'Game with ID {gid} is unknown'))
             )
 
-        log.info(f"Game id={game.id}, name='{game.game_name}''")
+        log.info(f"Get Game id={game.id}, name='{game.game_name}''")
 
         return web.Response(
             content_type='application/json',
