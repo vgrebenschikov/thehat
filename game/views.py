@@ -23,7 +23,7 @@ class NewGame(web.View):
 
         self.request.app.games[game.id] = game
 
-        log.info(f"New game created id={game.id}, name='{game.name}''")
+        log.info(f"New game created id={game.id}, name='{game.game_name}''")
 
         return web.Response(
             content_type='application/json',
