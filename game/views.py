@@ -27,7 +27,7 @@ class NewGame(web.View):
 
         return web.Response(
             content_type='application/json',
-            text=json.dumps(game.game_msg().data()))
+            text=json.dumps(game.game_msg().args()))
 
 
 class GetGame(web.View):
@@ -47,7 +47,23 @@ class GetGame(web.View):
 
         return web.Response(
             content_type='application/json',
-            text=json.dumps(game.game_msg().data()))
+            text=json.dumps(game.game_msg().args()))
+
+
+class ListGames(web.View):
+    async def get(self):
+
+        log.info(f"List Games num={len(self.request.app.games)}")
+
+        ret = []
+        for game in self.request.app.games.values():
+            ret.append(game.game_msg().args())
+
+        log.info(f"Get Game id={game.id}, name='{game.game_name}'")
+
+        return web.Response(
+            content_type='application/json',
+            text=json.dumps(ret))
 
 
 class Login(web.View):
