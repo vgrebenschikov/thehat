@@ -43,7 +43,7 @@ class GetGame(web.View):
                 text=str(message.Error(code=100, message=f'Game with ID {gid} is unknown'))
             )
 
-        log.info(f"Game id={game.id}, name='{game.name}''")
+        log.info(f"Game id={game.id}, name='{game.game_name}''")
 
         return web.Response(
             content_type='application/json',
