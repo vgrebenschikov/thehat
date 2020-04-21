@@ -55,7 +55,7 @@ $ websocat --exit-on-eof ws://127.0.0.1:8088/ws
 
 Running production service under gunicorn:
 ```bash
-$ gunicorn --bind 0.0.0.0:8088 --worker-class aiohttp.worker.GunicornWebWorker app:app
+$ gunicorn --bind 0.0.0.0:8088 --worker-class aiohttp.worker.GunicornWebWorker --workers 1 --threads 8 app:app
 ```
 
 ## Frontend (development)
@@ -120,11 +120,13 @@ server {
 		proxy_set_header Host               $host;
 	}
 
-	location / {
-		allow all;
-		error_page 404 index.html;
-	}
+    location / {
+            allow all;
+            root /usr/local/www/thehat;
 
+            try_files $uri /$uri
+            try_files ''  /index.html;
+    }
 
     listen 80;
     listen [::]:80;
