@@ -10,6 +10,19 @@ export interface Player {
     done: boolean;
 }
 
+export type TourResults = { [player: string]: number };
+
+export interface GameResults {
+    score: {[player: string]: {
+            total: number;
+            explained: number;
+            guessed: number;
+    }};
+
+    explained: TourResults[];
+    guessed: TourResults[];
+}
+
 export default class Game {
     @observable id: string;
     @observable connected: boolean = false;
@@ -29,6 +42,7 @@ export default class Game {
     @observable timeLeft: number | null = null;
     @observable currentWord: string | null = null;
     @observable turnWords: string[] = [];
+    @observable results: GameResults | null = null;
 
     private ws: WebSocketConnection;
     private readonly commands: {[k: string]: (data: any) => void};
@@ -88,6 +102,7 @@ export default class Game {
         });
         this.tourNumber = null;
         this.turnNumber = null;
+        this.results = null;
     };
 
     @action.bound
@@ -126,12 +141,22 @@ export default class Game {
     }
 
     @action.bound
+    sendReset() {
+        this.ws.send({
+            cmd: 'reset',
+        });
+        this.myState = PlayerState.UNKNOWN;
+        this.gameState = GameState.SETUP;
+    }
+
+    @action.bound
     cmdGame (data: any) {
         this.serverGameId = data.id || null;
         this.gameNumWords = data.numwords || null;
         this.turnTime = data.timer || null;
         this.myState = PlayerState.WORDS;  // TODO: this should come in the 'game' command
         this.gameState = GameState.SETUP;  // TODO: this should come in the 'game' command
+        this.results = null;
     };
 
     @action.bound
@@ -210,6 +235,7 @@ export default class Game {
     cmdFinish (data: any) {
         this.gameState = GameState.FINISH;
         this.timerStart = null;
+        this.results = data.results || null;
     };
 
     @action.bound
