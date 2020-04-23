@@ -24,7 +24,8 @@ class Results extends React.Component<{datastore?: DataStore}, {}> {
   render() {
     const {game} = this.props.datastore!;
     const {results} = game!;
-    const users = Object.getOwnPropertyNames(results?.score).sort();
+    const users = Object.getOwnPropertyNames(results?.score)
+                  .sort((u1, u2) => (results!.score[u2].total - results!.score[u1].total));
     return <>
       <ResultsTable component={Paper}>
         <Table>
