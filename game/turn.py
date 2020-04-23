@@ -23,8 +23,6 @@ class Turn:
         else:
             self.missed_words.append(self.word)
 
-        self.word = None
-
     def set_word(self, word) -> None:
         self.word = word
 
