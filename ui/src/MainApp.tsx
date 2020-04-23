@@ -1,10 +1,10 @@
 import React from "react";
-import {Button, Container, Paper, styled, Typography} from "@material-ui/core";
+import {Button, Container, Drawer, Paper, styled, Typography} from "@material-ui/core";
 import {inject, observer} from 'mobx-react';
 
 import DataStore from "store/DataStore";
 import Game from "store/Game";
-import {PlayerRole, PlayerState} from "store/types";
+import {GameState, PlayerRole, PlayerState} from "store/types";
 
 import WordsEntry from "unstarted/WordsEntry";
 import GuesserInterface from "ingame/GuesserInterface";
@@ -13,6 +13,9 @@ import ExplainerInterface from "ingame/ExplainerInterface";
 import tourDescripton from "tourDescription";
 import TurnChangeDialog from "TurnChangeDialog";
 import {ConnectionStatus} from "./store/WebSocketConnection";
+import UnstartedDrawer from "./unstarted/UnstartedDrawer";
+import UIStore from "./store/UIStore";
+import Results from "./Results";
 
 const StatusSurface = styled(Paper)({
     padding: '8px',
@@ -48,6 +51,10 @@ const GameContent = observer((props: {game: Game}) => {
             <Typography className="centered" variant="h6">Ожидайте хода</Typography>
         </MidCard>;
     }
+    if (game.gameState === GameState.FINISH && game.results) {
+        return <Results/>;
+    }
+
     if (game.myRole === PlayerRole.GUESSER) {
         return <GuesserInterface/>;
     }
@@ -82,6 +89,21 @@ class BadWebsocket extends React.Component<{datastore?: DataStore}, any> {
     }
 }
 
+interface CommonDrawerProps {
+    datastore?: DataStore;
+    uistore?: UIStore;
+}
+
+const CommonDrawer = inject('datastore', 'uistore')(observer((props: CommonDrawerProps) => {
+    const {uistore, datastore} = props;
+    if (datastore!.game?.gameState !== GameState.SETUP) {
+        return null;
+    }
+    return <Drawer open={uistore!.drawerOpen} onClose={() => uistore!.setDrawerOpen(false)}>
+        <UnstartedDrawer/>
+    </Drawer>;
+}));
+
 interface MainAppProps {
     datastore?: DataStore;
     match: any;
@@ -109,6 +131,7 @@ export default class MainApp extends React.Component<MainAppProps, {}> {
                 {datastore!.game && <GameContent game={datastore!.game}/>}
             </MainContainer>
             <TurnChangeDialog/>
+            <CommonDrawer/>
         </>;
     }
 }

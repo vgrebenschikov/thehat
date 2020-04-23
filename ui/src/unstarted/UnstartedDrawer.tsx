@@ -12,6 +12,12 @@ import {
   Typography
 } from "@material-ui/core";
 
+const DrawerContents = styled(Box)({
+  width: '60vw',
+  maxWidth: '400px',
+  minWidth: '230px',
+});
+
 const PersonItem = (props: {person: string, ready: boolean}) => {
   return <ListItem>
     <ListItemText primary={props.person}/>
@@ -41,7 +47,7 @@ const BottomPad = styled(Box)(({theme}) => ({
 export default inject('datastore')(observer((props: {datastore?: DataStore}) => {
   const game = props.datastore?.game!;
   const numPlayers = game.players.length;
-  return <>
+  return <DrawerContents>
     <Title>
       <Typography variant="h6">Игроков: {numPlayers}</Typography>
     </Title>
@@ -53,5 +59,5 @@ export default inject('datastore')(observer((props: {datastore?: DataStore}) => 
     <BottomPad>
       <Button variant="contained" color="primary" onClick={game.sendPlay}>Начать игру</Button>
     </BottomPad>
-  </>;
+  </DrawerContents>;
 }));

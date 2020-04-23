@@ -23,31 +23,47 @@ class NewGame(web.View):
 
         self.request.app.games[game.id] = game
 
-        log.info(f"New game created id={game.id}, name='{game.name}''")
+        log.info(f"New game created id={game.id}, name='{game.game_name}''")
 
         return web.Response(
             content_type='application/json',
-            text=json.dumps(game.game_msg().data()))
+            text=json.dumps(game.game_msg().args()))
 
 
 class GetGame(web.View):
     async def get(self):
         gid = self.request.match_info['id']
-        log.debug(f'Get game request - {gid}')
 
         try:
             game = self.request.app.games[gid]
         except KeyError:
+            log.info(f"Get Game id={gid} - not found")
             return web.Response(
                 content_type='application/json',
                 text=str(message.Error(code=100, message=f'Game with ID {gid} is unknown'))
             )
 
-        log.info(f"Game id={game.id}, name='{game.name}''")
+        log.info(f"Get Game id={game.id}, name='{game.game_name}'")
 
         return web.Response(
             content_type='application/json',
-            text=json.dumps(game.game_msg().data()))
+            text=json.dumps(game.game_msg().args()))
+
+
+class ListGames(web.View):
+    async def get(self):
+
+        log.info(f"List Games num={len(self.request.app.games)}")
+
+        ret = []
+        for game in self.request.app.games.values():
+            ret.append(game.game_msg().args())
+
+        log.info(f"Get Game id={game.id}, name='{game.game_name}'")
+
+        return web.Response(
+            content_type='application/json',
+            text=json.dumps(ret))
 
 
 class Login(web.View):
@@ -76,7 +92,7 @@ class WebSocket(web.View):
             )
 
         ws = web.WebSocketResponse()
-        self.request.app.websockets.append(ws)
+        self.request.app.websockets.add(ws)
 
         await ws.prepare(self.request)
 
@@ -110,7 +126,7 @@ class WebSocket(web.View):
             elif msg.type == WSMsgType.error:
                 log.debug('ws connection closed with exception %s' % ws.exception())
 
-        self.request.app.websockets.remove(ws)
+        self.request.app.websockets.discard(ws)
         log.debug('websocket connection closed')
 
         return ws

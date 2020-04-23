@@ -25,8 +25,10 @@ The Hat (Shlyapa) online game
   * react
   * mobx
   * material-ui
+
 # How to Run
 ## Backend 
+
 Running server for development 
 ```bash
 $ python app.py
@@ -38,6 +40,7 @@ $ python app.py
 [L:23]# DEBUG    [12-04-2020 01:06:18]  user vova logged in as 4482238864
 ...
 ```
+
 How to test WebSocket connection:
 ```bash
 $ websocat --exit-on-eof ws://127.0.0.1:8088/ws
@@ -50,13 +53,90 @@ $ websocat --exit-on-eof ws://127.0.0.1:8088/ws
 {"cmd": "play"}
 ```
 
+Running production service under gunicorn:
+```bash
+$ gunicorn --bind 0.0.0.0:8088 --worker-class aiohttp.worker.GunicornWebWorker --workers 1 --threads 8 app:app
+```
+
 ## Frontend (development)
 
 You need to supply a set of firebase credentials, placing the config file in `ui/src/firebase-config.ts`. The contents of this file is secret so it is not included in this git.
 
+Running frontend for development purposes
 ```bash
 $ cd ui
 $ yarn install
 $ yarn start
 ```
 (this will open a browser to http://localhost:3000 and connect to the backend running on localhost:8088 
+
+Generate frontend static folder
+```bash
+$ cd ui
+$ yarn install
+$ yarn build
+```
+Then put build/ folder under site root
+
+## Example of nginx config to for hat server
+```
+# Hat Game server
+
+upstream back {
+	server 127.0.0.1:8088 max_conns=512;
+}
+
+server {
+
+	root /usr/local/www/thehat;
+	server_name hat.example.com;
+
+	location /ws {
+		allow all;
+
+		proxy_pass http://back$request_uri;
+
+      		proxy_http_version 1.1;
+      		proxy_set_header Upgrade $http_upgrade;
+      		proxy_set_header Connection "upgrade";
+
+		proxy_read_timeout 86400;
+		proxy_send_timeout 86400;
+
+		proxy_set_header Host		    $host;
+		proxy_set_header X-Real-IP          $remote_addr;
+		proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+
+	}
+
+	location /games {
+		allow all;
+
+		proxy_pass http://back$request_uri;
+		proxy_http_version 1.1;
+
+		proxy_set_header X-Real-IP          $remote_addr;
+		proxy_set_header X-Forwarded-For    $proxy_add_x_forwarded_for;
+		proxy_set_header Host               $host;
+	}
+
+    location / {
+            allow all;
+            root /usr/local/www/thehat;
+
+            try_files $uri /$uri
+            try_files ''  /index.html;
+    }
+
+    listen 80;
+    listen [::]:80;
+
+    listen [::]:443 ssl; # managed by Certbot
+    listen 443 ssl; # managed by Certbot
+    ssl_certificate /usr/local/etc/letsencrypt/live/hat.example.com/fullchain.pem; # managed by Certbot
+    ssl_certificate_key /usr/local/etc/letsencrypt/live/hat.example.com/privkey.pem; # managed by Certbot
+    include /usr/local/etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
+    ssl_dhparam /usr/local/etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
+
+}
+```
