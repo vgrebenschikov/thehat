@@ -1,5 +1,6 @@
 #! /usr/bin/env python3
 from aiohttp import web
+import weakref
 
 import settings
 from game.views import NewGame, GetGame, ListGames, Login, WebSocket
@@ -7,7 +8,7 @@ from game.hat import HatGame
 
 
 async def on_shutdown(app):
-    for ws in app['websockets']:
+    for ws in app.websockets:
         await ws.close(code=1001, message='Server shutdown')
 
 
@@ -19,7 +20,7 @@ async def shutdown(server, app, handler):
     await app.cleanup()
 
 app = web.Application()
-app.websockets = []
+app.websockets = weakref.WeakSet()
 app.games = {}
 
 # default game, temporary, hackish

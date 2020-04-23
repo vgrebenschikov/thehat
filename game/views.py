@@ -92,7 +92,7 @@ class WebSocket(web.View):
             )
 
         ws = web.WebSocketResponse()
-        self.request.app.websockets.append(ws)
+        self.request.app.websockets.add(ws)
 
         await ws.prepare(self.request)
 
@@ -126,7 +126,7 @@ class WebSocket(web.View):
             elif msg.type == WSMsgType.error:
                 log.debug('ws connection closed with exception %s' % ws.exception())
 
-        self.request.app.websockets.remove(ws)
+        self.request.app.websockets.discard(ws)
         log.debug('websocket connection closed')
 
         return ws
