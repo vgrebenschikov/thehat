@@ -50,7 +50,7 @@ class Results extends React.Component<{datastore?: DataStore}, {}> {
         </Table>
       </ResultsTable>
       <Card>
-        <Button className="full-width-button" onClick={() => game!.sendReset()}>Новая игра</Button>
+        <Button className="full-width-button" onClick={() => game!.sendRestart()}>Новая игра</Button>
       </Card>
     </>
   }

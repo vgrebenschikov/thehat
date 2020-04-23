@@ -141,9 +141,9 @@ export default class Game {
     }
 
     @action.bound
-    sendReset() {
+    sendRestart() {
         this.ws.send({
-            cmd: 'reset',
+            cmd: 'restart',
         });
         this.myState = PlayerState.UNKNOWN;
         this.gameState = GameState.SETUP;
