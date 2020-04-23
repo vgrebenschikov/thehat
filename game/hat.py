@@ -74,6 +74,9 @@ class HatGame:
         if name not in self.players_map:
             if self.state != HatGame.ST_SETUP:
                 log.info(f'Cannot login new user {name}({id(ws)}) while game in progress')
+                await ws.send_json(message.Error(
+                    code=104,
+                    message=f"Can't login new user {name} while game in progress").data())
                 return
 
             log.info(f'Player {name}({id(ws)}) was added to game')
