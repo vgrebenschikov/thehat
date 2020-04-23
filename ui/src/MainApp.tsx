@@ -15,6 +15,7 @@ import TurnChangeDialog from "TurnChangeDialog";
 import {ConnectionStatus} from "./store/WebSocketConnection";
 import UnstartedDrawer from "./unstarted/UnstartedDrawer";
 import UIStore from "./store/UIStore";
+import Results from "./Results";
 
 const StatusSurface = styled(Paper)({
     padding: '8px',
@@ -50,6 +51,10 @@ const GameContent = observer((props: {game: Game}) => {
             <Typography className="centered" variant="h6">Ожидайте хода</Typography>
         </MidCard>;
     }
+    if (game.gameState === GameState.FINISH && game.results) {
+        return <Results/>;
+    }
+
     if (game.myRole === PlayerRole.GUESSER) {
         return <GuesserInterface/>;
     }
