@@ -39,6 +39,7 @@ const MainContainer = styled(Container)(({theme}) => ({
     flexGrow: 1,
     display: "flex",
     flexDirection: 'column',
+    minHeight: 0,
 })) as typeof Container;
 
 const GameContent = observer((props: {game: Game}) => {

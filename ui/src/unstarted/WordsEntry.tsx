@@ -77,11 +77,12 @@ class AddButton extends React.Component<{ datastore?: DataStore }, {}> {
 
 const BottomButton = styled(Box)(({theme}) => ({
   position: 'absolute',
-  bottom: 0,
-  left: 0,
-  right: 0,
+  bottom: '32px',
+  right: '16px',
   boxShadow: '0 0 4px black',
-  borderRadius: 0,
+  borderRadius: '24px',
+  backgroundColor: theme.palette.secondary.main,
+  color: theme.palette.secondary.contrastText,
   height: '48px',
   display: 'flex',
   justifyContent: 'center',
@@ -91,6 +92,18 @@ const BottomButton = styled(Box)(({theme}) => ({
     height: '100%',
   },
 })) as typeof Box;
+
+const WordList = styled(Box)({
+  flexGrow: 1,
+  minHeight: 0,
+  display: 'flex',
+  flexDirection: 'column',
+  justifyContent: 'flex-start',
+  alignItems: 'stretch',
+  overflow: 'auto',
+  width: '100%',
+  padding: '8px 8px 0 8px',
+}) as typeof Box;
 
 @inject('datastore')
 @observer
@@ -107,8 +120,10 @@ export default class WordsEntry extends React.Component<{datastore?: DataStore},
   render() {
     const words = this.props.datastore!.ownWords;
     return <>
-      {words.map((w) => <WordCard word={w} onDelete={() => this.deleteWord(w)} key={w}/>)}
-      <AddButton/>
+      <WordList>
+        {words.map((w) => <WordCard word={w} onDelete={() => this.deleteWord(w)} key={w}/>)}
+        <AddButton/>
+      </WordList>
       <BottomButton>
         <Button className="button" onClick={this.commitWords}><i className="material-icons-round">check</i>Готово</Button>
       </BottomButton>
