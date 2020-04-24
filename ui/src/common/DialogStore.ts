@@ -23,4 +23,18 @@ export class DialogStore {
     this.isOpen = false;
     this.callback();
   }
+
+  change(field: string) {
+    return action((ev:any) => {
+      // @ts-ignore
+      this[field] = ev.target.value
+    })
+  }
+
+  changenum(field: string) {
+    return action((ev:any) => {
+      // @ts-ignore
+      this[field] = parseFloat(ev.target.value);
+    })
+  }
 }

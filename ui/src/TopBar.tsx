@@ -73,7 +73,7 @@ export default inject('datastore')(observer((props: { datastore?: DataStore }) =
         <Toolbar>
             {props.datastore?.game && <MenuButton/>}
             <Typography variant="h6" className={classes.title}>
-                {game ? `Комната: ${game.id}` : "Шляпа!"}
+                {game?.gameName ? `Комната: ${game.gameName}` : "Шляпа!"}
             </Typography>
             <UserDesignator />
         </Toolbar>

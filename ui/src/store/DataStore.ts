@@ -42,16 +42,11 @@ export default class DataStore {
         }
     };
 
-    createGame = async () => {
+    createGame = async (name: string, numwords: number, timer: number) => {
         const url = process.env.NODE_ENV === 'development'
           ? `//${window.location.hostname}:8088/games`
           : `//${window.location.host}/games`;
 
-        const data = {
-            name: 'Secret Tea',
-            numwords: 6,
-            timer: 20,
-        };
         const resp = await fetch(url, {
             method: 'POST',
             cache: 'no-cache',
@@ -60,7 +55,7 @@ export default class DataStore {
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify(data),
+            body: JSON.stringify({name, numwords, timer}),
           });
         const ret = await resp.json();
         return ret.id;

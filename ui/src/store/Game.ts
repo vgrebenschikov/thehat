@@ -26,7 +26,7 @@ export interface GameResults {
 export default class Game {
     @observable id: string;
     @observable connected: boolean = false;
-    @observable serverGameId: string | null = null;
+    @observable gameName: string | null = null;
     @observable ws: WebSocketConnection;
 
     @observable gameState: GameState = GameState.SETUP;
@@ -152,7 +152,7 @@ export default class Game {
 
     @action.bound
     cmdGame (data: any) {
-        this.serverGameId = data.id || null;
+        this.gameName = data.name || 'Неизвестная игра';
         this.gameNumWords = data.numwords || null;
         this.turnTime = data.timer || null;
         this.myState = PlayerState.WORDS;  // TODO: this should come in the 'game' command
