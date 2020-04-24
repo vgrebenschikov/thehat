@@ -2,9 +2,6 @@ export enum GameState {
   SETUP = 'setup',
   PLAY = 'play',
 
-  PREP_TURN = 'prep_turn',
-  TURN = 'turn',
-
   FINISH = 'finish',
 }
 

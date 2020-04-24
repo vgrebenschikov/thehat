@@ -16,6 +16,7 @@ import {ConnectionStatus} from "./store/WebSocketConnection";
 import UnstartedDrawer from "./unstarted/UnstartedDrawer";
 import UIStore from "./store/UIStore";
 import Results from "./Results";
+import WaitingPlayerInterface from "./ingame/WaitingPlayerInterface";
 
 const StatusSurface = styled(Paper)({
     padding: '8px',
@@ -48,9 +49,7 @@ const GameContent = observer((props: {game: Game}) => {
         return <WordsEntry/>;
     }
     if (game.myState === PlayerState.WAIT) {
-        return <MidCard>
-            <Typography className="centered" variant="h6">Ожидайте хода</Typography>
-        </MidCard>;
+        return <WaitingPlayerInterface/>;
     }
     if (game.gameState === GameState.FINISH && game.results) {
         return <Results/>;
