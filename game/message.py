@@ -27,11 +27,11 @@ class Message(ABC):
     def msg(cls, data):
         if ABC in cls.__bases__:
             if 'cmd' not in data:
-                raise ValueError(f'cmd is not specified')
+                raise ValueError('cmd is not specified')
             cmd = data['cmd']
-            mcls = getattr(sys.modules[__name__], cmd.title())
+            mcls = getattr(sys.modules[__name__], cmd.title(), None)
 
-            if not issubclass(mcls, cls):
+            if mcls is None or not issubclass(mcls, cls):
                 raise ValueError(f"Unknown command '{cmd}'")
 
             del data['cmd']
