@@ -18,3 +18,5 @@ DEBUG = env.str('DEBUG', default=True)
 
 SITE_HOST = env.str('HOST', default='0.0.0.0')
 SITE_PORT = env.str('PORT', default='8088')
+
+GAME_INACTIVITY_TTL = 3600  # in seconds = 1 hour

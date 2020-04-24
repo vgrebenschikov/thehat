@@ -5,6 +5,7 @@ from .turn import Turn
 from .timer import Timer
 from shlyapa import Shlyapa, Config
 
+import datetime
 import uuid
 import random
 from typing import (List, Dict, Optional)
@@ -18,9 +19,10 @@ commands = []
 def handler(method):
     """Decorator to mark methods callable through API"""
 
-    async def call(self, ws, *args):
+    async def call(self, *args):
+        self.last_event_time = datetime.datetime.now()
         log.debug(f'Received command {method.__name__}')
-        await method(self, ws, *args)
+        await method(self, *args)
 
     commands.append(method.__name__)
 
@@ -44,6 +46,7 @@ class HatGame:
     timer: Optional[Timer]
     all_words: List[str]
     tour_words: List[str]
+    last_event_time: datetime.datetime
 
     def __init__(self, name=None, numwords=6, timer=20):
         self.players = []
@@ -59,6 +62,7 @@ class HatGame:
         self.turn_timer = timer or 20  # in seconds
         self.turn = None
         self.timer = None
+        self.last_event_time = datetime.datetime.now()
 
     def register_player(self, name=None, socket=None) -> bool:
         """Add new player to game"""
@@ -75,17 +79,21 @@ class HatGame:
         self.players_map[name] = p
         return True
 
+    async def send_json(self, ws, msg):
+        self.last_event_time = datetime.datetime.now()
+        await ws.send_json(msg.data())
+
     async def broadcast(self, msg):
         """Broadcast message to all players"""
         for p in self.players:
             if p.socket is not None:
-                await p.socket.send_json(msg.data())
+                await self.send_json(p.socket, msg)
 
     async def error(self, ws, code, msgtxt):
         """Respond with error and log error"""
 
         log.error(msgtxt)
-        await ws.send_json(message.Error(code=code, message=msgtxt).data())
+        await self.send_json(ws, message.Error(code=code, message=msgtxt))
 
     async def cmd(self, ws, data):
         """Command multiplexer"""
@@ -119,9 +127,9 @@ class HatGame:
         if name not in self.players_map:
             if self.state != HatGame.ST_SETUP:
                 log.info(f'Cannot login new user {name}({id(ws)}) while game in progress')
-                await ws.send_json(message.Error(
+                await self.send_json(ws, message.Error(
                     code=104,
-                    message=f"Can't login new user {name} while game in progress").data())
+                    message=f"Can't login new user {name} while game in progress"))
                 return
 
             log.info(f'Player {name}({id(ws)}) was added to game')
@@ -135,13 +143,13 @@ class HatGame:
 
         if self.state == HatGame.ST_PLAY and self.shlyapa:
             s = self.shlyapa
-            await ws.send_json(message.Tour(tour=s.get_cur_tour()).data())
+            await self.send_json(ws, message.Tour(tour=s.get_cur_tour()))
             if self.turn:
-                await ws.send_json(message.Turn(
+                await self.send_json(ws, message.Turn(
                     turn=s.get_cur_turn(),
                     explain=self.turn.explaining.name,
                     guess=self.turn.guessing.name
-                ).data())
+                ))
 
     def game_msg(self):
         return message.Game(
@@ -155,7 +163,7 @@ class HatGame:
     @handler
     async def game(self, ws):
         """Notify just known Player about Game layout"""
-        await ws.send_json(self.game_msg().data())
+        await self.send_json(ws, self.game_msg())
 
     @handler
     async def words(self, ws, msg: message.Words):
@@ -181,7 +189,7 @@ class HatGame:
         msg = message.Prepare(players=players)
 
         if ws is not None:
-            await ws.send_json(msg.data())
+            await self.send_json(ws, msg)
         else:
             await self.broadcast(msg)
 
@@ -212,7 +220,7 @@ class HatGame:
     async def wait(self, ws):
         """Response to the player on attempt to start game with not all players ready"""
         log.debug('Wait for other players')
-        await ws.send_json(message.Wait().data())
+        await self.send_json(ws, message.Wait())
 
     async def tour(self):
         """Notify All Players about tour start, happens at begin of each tour"""
@@ -304,7 +312,7 @@ class HatGame:
         self.turn.word = self.tour_words.pop(random.randrange(0, len(self.tour_words)))
 
         m = message.Next(word=self.turn.word)
-        await self.turn.explaining.socket.send_json(m.data())
+        await self.send_json(self.turn.explaining.socket, m)
 
     @handler
     async def ready(self, ws, msg: message.Ready):
@@ -403,13 +411,7 @@ class HatGame:
 
         await p.socket.close()
 
-    @handler
-    async def restart(self, ws, msg: message.Restart):
-        """Restart the game"""
-
-        if id(ws) in self.sockets_map:
-            log.info(f'Game was restarted by {self.sockets_map[id(ws)]}')
-
+    def reinit(self):
         if self.timer:
             self.timer.cancel()
 
@@ -420,13 +422,22 @@ class HatGame:
         self.turn = None
         self.timer = None
 
+    @handler
+    async def restart(self, ws, msg: message.Restart):
+        """Restart the game"""
+
+        if id(ws) in self.sockets_map:
+            log.info(f'Game was restarted by {self.sockets_map[id(ws)]}')
+
+        self.reinit()
+
         for p in self.players:
             p.reset()
 
         await self.broadcast(self.game_msg())
 
     @handler
-    async def reset(self, ws, msg: message.Restart):
+    async def reset(self, ws=None, msg: message.Restart = None):
         """Reset the game - disconnect all users except me"""
 
         me = None
@@ -448,5 +459,6 @@ class HatGame:
         if me:
             self.players.append(me)
 
-        log.info(f'Game was reset by {me if me else "-"}')
-        await self.restart(ws, message.Restart())
+        self.reinit()
+
+        log.info(f'Game was reset{f" by {me}" if me else ""}')
