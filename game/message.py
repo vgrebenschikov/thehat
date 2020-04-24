@@ -20,6 +20,9 @@ class Message(ABC):
         return type(self) == type(other) and \
             all(getattr(self, p) == getattr(other, p) for p in self._get_attributes())
 
+    def __ne__(self, other):
+        return not self == other
+
     @classmethod
     def msg(cls, data):
         if ABC in cls.__bases__:

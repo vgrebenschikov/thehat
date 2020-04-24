@@ -52,7 +52,7 @@ class HatGame:
             p = self.players_map[name]
             del self.sockets_map[id(p.socket)]
             self.sockets_map[id(socket)] = p
-            self.players_map[name].set_socket(socket)
+            self.players_map[name].socket = socket
             return False
 
         p = Player(name=name, socket=socket)
@@ -115,7 +115,7 @@ class HatGame:
         """Player sends it's words to server"""
         words = msg.words
         p = self.sockets_map[id(ws)]
-        p.set_words(words)
+        p.words = words
         log.debug(f'user {p.name} sent words: {words}')
 
         await self.prepare()

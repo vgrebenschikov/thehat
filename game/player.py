@@ -1,13 +1,15 @@
 from settings import log
+
 from transitions import Machine
+from typing import (List, Optional)
 
 
 class Player:
-    name = None
-    state = None
+    state: str
     socket = None
-    words = []
-    machine: Machine
+    __name: Optional[str] = None
+    __words: List[str]
+    __machine: Machine
 
     ST_UNKNOWN = 'unknown'         # Just connected - unknown
     ST_WORDS = 'words'             # Waiting for words from player
@@ -19,8 +21,10 @@ class Player:
     ST_FINISH = 'finish'           # Finishing turn
 
     def __init__(self, name=None, socket=None):
+        self.state = Player.ST_UNKNOWN
         self.socket = socket
-        self.name = name
+        self.__name = name
+        self.__words = []
 
         states = [v for k, v in Player.__dict__.items() if k.startswith('ST_')]
         transitions = [
@@ -36,34 +40,41 @@ class Player:
             ['finish',     Player.ST_LAST_ANSWER, Player.ST_FINISH     ],  # noqa
             ['reset',      '*',                   Player.ST_WORDS      ],  # noqa
         ]
-        self.machine = Machine(model=self, states=states, initial=Player.ST_UNKNOWN)
+        self.__machine = Machine(model=self, states=states, initial=Player.ST_UNKNOWN)
         for t in transitions:
-            self.machine.add_transition(
+            self.__machine.add_transition(
                 trigger=t[0],
                 source=t[1],
                 dest=t[2],
                 after='log'
             )
 
-        if self.name:
+        if self.__name:
             self.waitwords()
+
+    @property
+    def name(self):
+        return self.__name
+
+    @name.setter
+    def name(self, name):
+        if self.state != Player.ST_UNKNOWN:
+            raise Exception(f'Wrong player status={self.state} for name assignment')
+        self.__name = name
+        self.waitwords()
 
     def log(self):
         log.debug(f'Player {self.name} status changed to {self.state}')
 
-    def set_socket(self, ws):
-        self.socket = ws
+    @property
+    def words(self):
+        return self.__words
 
-    def set_name(self, name):
-        if self.state != Player.ST_UNKNOWN:
-            raise Exception(f'Wrong player status={self.state} for set_name()')
-        self.name = name
-        self.waitwords()
-
-    def set_words(self, words):
+    @words.setter
+    def words(self, words):
         if self.state != Player.ST_WORDS:
-            raise Exception(f'Wrong player status={self.state} for set_words()')
-        self.words = words
+            raise Exception(f'Wrong player status={self.state} for words assignment')
+        self.__words = words
         self.wait()
 
     def __str__(self):
