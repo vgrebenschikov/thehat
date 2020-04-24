@@ -5,7 +5,6 @@ import "firebase/firestore";
 import {action, computed, observable, runInAction} from "mobx";
 import Game from "./Game";
 import firebaseConfig from 'firebase-config';
-import WebSocketConnection from "./WebSocketConnection";
 import UIStore from "store/UIStore";
 
 export default class DataStore {
@@ -16,8 +15,6 @@ export default class DataStore {
     @observable game: Game | null = null;
 
     @observable ownWords: string[] = [];
-
-    @observable websocket: WebSocketConnection = new WebSocketConnection();
 
     private uistore: UIStore;
 
@@ -31,8 +28,6 @@ export default class DataStore {
 
     constructor(uistore: UIStore) {
         this.uistore = uistore;
-        this.websocket.establishConnection();
-        this.websocket.subscribeReceiver(this.onWebsocketMessage);
         firebase.initializeApp(firebaseConfig);
         firebase.auth().onAuthStateChanged(action((user: User | null) => {
             this.user = user;
@@ -47,28 +42,38 @@ export default class DataStore {
         }
     };
 
+    createGame = async () => {
+        const url = process.env.NODE_ENV === 'development'
+          ? `//${window.location.hostname}:8088/games`
+          : `//${window.location.host}/games`;
+
+        const data = {
+            name: 'Secret Tea',
+            numwords: 6,
+            timer: 20,
+        };
+        const resp = await fetch(url, {
+            method: 'POST',
+            cache: 'no-cache',
+            redirect: 'follow',
+            referrerPolicy: 'no-referrer',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data),
+          });
+        const ret = await resp.json();
+        return ret.id;
+    };
+
     joinGame = action((name: string) => {
         if (this.game?.id !== name) {
-            this.game = new Game(name, this.user!, this.websocket, this.uistore);
+            this.game = new Game(name, this.user!, this.uistore);
         }
     });
 
     get inGame(): boolean {
         return !!this.game;
-    }
-
-    setUserName = action((name: string) => {
-        if (!this.user?.isAnonymous) {
-            return;
-        }
-        this.user.updateProfile({ displayName: name })
-            .then(action(() => {
-                this.userName = this.user?.displayName || '';
-            }));
-    });
-
-    onWebsocketMessage(data: any) {
-        console.log('received websocket data: ', data);
     }
 
     @action

@@ -27,6 +27,7 @@ export default class Game {
     @observable id: string;
     @observable connected: boolean = false;
     @observable serverGameId: string | null = null;
+    @observable ws: WebSocketConnection;
 
     @observable gameState: GameState = GameState.SETUP;
     @observable players: Player[] = [];
@@ -44,13 +45,12 @@ export default class Game {
     @observable turnWords: string[] = [];
     @observable results: GameResults | null = null;
 
-    private ws: WebSocketConnection;
     private readonly commands: {[k: string]: (data: any) => void};
     private uistore: UIStore;
 
     user: Player;
 
-    constructor(name: string, user: User, ws: WebSocketConnection, uistore: UIStore) {
+    constructor(name: string, user: User, uistore: UIStore) {
         this.commands = {
             game: this.cmdGame,
             prepare: this.cmdPrepare,
@@ -67,7 +67,8 @@ export default class Game {
         };
         this.id = name;
         this.uistore = uistore;
-        this.ws = ws;
+        this.ws = new WebSocketConnection(name);
+        this.ws.reconnect();
         this.ws.subscribeReceiver(this.onMessageReceived);
         this.user = { name: user.displayName || 'Unknown', uid: user.uid, done: false };
         setInterval(this.updateTimeLeft, 1000);

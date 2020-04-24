@@ -60,6 +60,12 @@ app.add_routes((
     web.get('/ws', WebSocket),  # default game
 ))
 
+if settings.NEED_CORS:
+    app.add_routes(
+        [web.options('/games', NewGame, name='cors')]
+    )
+
+
 cron = Scheduler(60, expire_games, app)
 
 if __name__ == '__main__':

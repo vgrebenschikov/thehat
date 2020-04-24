@@ -1,7 +1,7 @@
-from aiohttp import web, WSMsgType
+from aiohttp import web
 from asyncio import CancelledError
 
-from settings import log
+from settings import log, NEED_CORS
 from . import message
 from .hat import HatGame
 
@@ -26,9 +26,23 @@ class NewGame(web.View):
 
         log.info(f"New game created id={game.id}, name='{game.game_name}''")
 
+        headers = {}
+        if NEED_CORS:
+            headers={'Access-Control-Allow-Origin': self.request.headers['Origin']}
+
         return web.Response(
             content_type='application/json',
-            text=json.dumps(game.game_msg().args()))
+            text=json.dumps(game.game_msg().args()),
+            headers=headers
+        )
+
+    async def options(self):
+        return web.Response(
+            status=200,
+            headers={'Access-Control-Allow-Origin': self.request.headers['Origin'],
+                     'Access-Control-Allow-Method': 'POST',
+                     'Access-Control-Allow-Headers': 'Content-Type'}
+        )
 
 
 class GetGame(web.View):

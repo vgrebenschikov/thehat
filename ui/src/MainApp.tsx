@@ -73,16 +73,16 @@ class BadWebsocket extends React.Component<{datastore?: DataStore}, any> {
         return <Typography className="centered" variant="body1">Нет связи, пытаемся пробиться...</Typography>;
     }
     render_disconnected() {
-        const {websocket} = this.props.datastore!;
+        const {ws} = this.props.datastore!.game!;
         return <>
             <Typography className="content" variant="body1">Всё пропало! Попробуем ещё?</Typography><br/>
-            <Button className="content" variant="contained" onClick={() => websocket.reconnectManually()}>ОК</Button>
+            <Button className="content" variant="contained" onClick={() => ws.reconnectManually()}>ОК</Button>
         </>;
     }
     render() {
-        const {websocket} = this.props.datastore!;
+        const {ws} = this.props.datastore!.game!;
         return <MidCard>
-            {websocket.connectionStatus === ConnectionStatus.Disconnected ?
+            {ws.connectionStatus === ConnectionStatus.Disconnected ?
               this.render_disconnected() :
               this.render_reconnecting()
             }
@@ -119,9 +119,9 @@ export default class MainApp extends React.Component<MainAppProps, {}> {
     }
 
     render() {
-        const { datastore } = this.props;
-        if (datastore!.websocket.connectionStatus === ConnectionStatus.Disconnected
-            || datastore!.websocket.connectionStatus === ConnectionStatus.Retrying) {
+        const { game } = this.props.datastore!;
+        if (game?.ws.connectionStatus === ConnectionStatus.Disconnected
+            || game?.ws.connectionStatus === ConnectionStatus.Retrying) {
             return <MainContainer>
                 <BadWebsocket/>
             </MainContainer>;
@@ -129,7 +129,7 @@ export default class MainApp extends React.Component<MainAppProps, {}> {
         return <>
             <StatusBar/>
             <MainContainer>
-                {datastore!.game && <GameContent game={datastore!.game}/>}
+                {game && <GameContent game={game}/>}
             </MainContainer>
             <TurnChangeDialog/>
             <CommonDrawer/>
