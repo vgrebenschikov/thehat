@@ -58,6 +58,11 @@ Running production service under gunicorn:
 $ gunicorn --bind 0.0.0.0:8088 --worker-class aiohttp.worker.GunicornWebWorker --workers 1 --threads 8 app:app
 ```
 
+## How to run tests suite
+```bash
+$ pytest tests --cov=. --cov-report=xml --cov-report=term-missing --no-cov-on-fail
+```
+
 ## Frontend (development)
 
 You need to supply a set of firebase credentials, placing the config file in `ui/src/firebase-config.ts`. The contents of this file is secret so it is not included in this git.
