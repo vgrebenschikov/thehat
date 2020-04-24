@@ -6,7 +6,7 @@ import DataStore from "store/DataStore";
 import Game from "store/Game";
 import {PlayerState} from "store/types";
 
-import {MidCard} from "common/Card";
+import {Card, MidCard} from "common/Card";
 import TurnDescription from "./TurnDescription";
 import {ReadyButton, Timer, WaitingCard} from "./CommonCards";
 
@@ -22,16 +22,14 @@ const MainBody = observer((props: {game: Game}) => {
 
   if (game.myState === PlayerState.PLAY) {
     return <>
+      {(game?.turnWords || []).map((w: string) => <Card>
+        <Typography variant="body2" className="centered">{w}</Typography>
+      </Card>)}
       <MidCard>
         <Typography variant="h3" className="centered">
           Отгадывайте!
         </Typography>
       </MidCard>
-      {game?.turnWords?.length>0 && <MidCard>
-          <Typography variant="body2" className="centered">
-              Последнее отгаданное слово: {game?.turnWords[-1]}
-          </Typography>
-      </MidCard>}
     </>
   }
   if (game?.myState === PlayerState.LAST_ANSWER) {

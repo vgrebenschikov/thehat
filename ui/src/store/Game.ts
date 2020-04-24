@@ -182,7 +182,6 @@ export default class Game {
         this.turnNumber = data.turn || null;
         this.explainer = data.explain || null;
         this.guesser = data.guess || null;
-        this.gameState = GameState.PREP_TURN;
         this.timerStart = null;
         if (this.explainer === this.user?.name) {
             this.myState = PlayerState.BEGIN;
@@ -194,17 +193,16 @@ export default class Game {
             this.myState = PlayerState.WAIT;
             this.myRole = PlayerRole.WATCHER;
         }
+        this.turnWords = [];
     };
 
     @action.bound
     cmdStart (data: any) {
-        this.gameState = GameState.TURN;
         if (this.myRole !== PlayerRole.WATCHER) {
             this.myState = PlayerState.PLAY;
         }
         this.timerStart = new Date();
         this.updateTimeLeft();
-        this.turnWords = [];
     };
 
     @action.bound
@@ -214,12 +212,12 @@ export default class Game {
 
     @action.bound
     cmdExplained (data: any) {
-        this.turnWords.push(data.word)
+        this.turnWords.push(data.word);
     };
 
     @action.bound
     cmdMissed (data: any) {
-
+        this.turnWords.push('--- не угадали ---');
     };
 
     @action.bound
