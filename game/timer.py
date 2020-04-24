@@ -26,4 +26,3 @@ class Scheduler(Timer):
         await asyncio.sleep(self._timeout)
         self._task = asyncio.ensure_future(self._job())
         await self._callback(*self._args, **self._kwargs)
-

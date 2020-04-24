@@ -28,7 +28,7 @@ class NewGame(web.View):
 
         headers = {}
         if NEED_CORS:
-            headers={'Access-Control-Allow-Origin': self.request.headers['Origin']}
+            headers = {'Access-Control-Allow-Origin': self.request.headers['Origin']}
 
         return web.Response(
             content_type='application/json',
