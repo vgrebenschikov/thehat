@@ -14,6 +14,11 @@ export default class WebSocketConnection {
     private ws: WebSocket | null = null;
     private reconnectAttempt = 0;
     private receivers: ((data: any) => void)[] = [];
+    private readonly id: string;
+
+    constructor(id: string) {
+      this.id = id;
+    }
 
     @action establishConnection = () => {
       if (this.ws) {
@@ -22,10 +27,12 @@ export default class WebSocketConnection {
       this.reconnectManually();
     };
 
-    @action reconnect = () => {
+    @action.bound reconnect = () => {
       this.connectionStatus = ConnectionStatus.Connecting;
       const wsProto = window.location.protocol === 'https' ? 'wss' : 'ws';
-      const wsUri = process.env.NODE_ENV === 'development' ? `ws:${window.location.hostname}:8088/ws`: `${wsProto}:${window.location.host}/ws`;
+      const wsUri = process.env.NODE_ENV === 'development'
+        ? `ws:${window.location.hostname}:8088/ws/${this.id}`
+        : `${wsProto}:${window.location.host}/ws/${this.id}`;
       this.ws = new WebSocket(wsUri);
       this.ws.addEventListener('open', this.onOpen);
       this.ws.addEventListener('message', this.onMessage);

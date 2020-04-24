@@ -36,11 +36,6 @@ class WordCard extends React.Component<WordCardProps, {}> {
 
 class AddWordDialogStore extends DialogStore {
   @observable word: string = '';
-
-  @action.bound
-  setWord(w: string) {
-    this.word = w;
-  }
 }
 
 @inject('datastore')
@@ -62,7 +57,7 @@ class AddButton extends React.Component<{ datastore?: DataStore }, {}> {
           this.ds.submit()
         }}>
           <DialogContent>
-            <Input onChange={ev => this.ds.setWord(ev.target.value)}
+            <Input onChange={this.ds.change('word')}
                    autoFocus>{this.ds.word}</Input>
           </DialogContent>
           <DialogActions>

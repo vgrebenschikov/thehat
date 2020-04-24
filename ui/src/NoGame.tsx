@@ -5,100 +5,67 @@ import {
     DialogActions,
     DialogContent,
     DialogTitle,
-    Grid,
-    Input,
-    Theme
+    styled,
+    TextField
 } from '@material-ui/core';
-import {withStyles} from '@material-ui/core/styles';
 import {inject, observer} from 'mobx-react';
 import React from 'react';
 import MobxReactRouter from "mobx-react-router";
-import RuLette from "./rulette";
-import {action, observable} from "mobx";
+import DataStore from "./store/DataStore";
 import {DialogStore} from "./common/DialogStore";
+import {observable} from "mobx";
 
-const styles = (theme: Theme) => ({
-    button: {
-        margin: theme.spacing(2),
-    },
-});
+const MidButton = styled(Button)({
+    margin: '16px auto',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+}) as typeof Button;
 
-class gameNameStore extends DialogStore {
-    @observable name: string = '';
-
-    @action.bound
-    setName (name: string) {
-        this.name = name;
-    }
+class NewGameDialogStore extends DialogStore {
+    @observable name: string = 'Интересная игра';
+    @observable numwords: number = 5;
+    @observable timer: number = 20;
 }
 
 interface NoGameProps {
     routing?: MobxReactRouter.RouterStore;
-    classes: any;
+    datastore?: DataStore;
 }
 
-@inject("routing")
+@inject('routing', 'datastore')
 @observer
-class NoGame extends React.Component<NoGameProps, any> {
-    dialogStore: gameNameStore;
-
+export default class NoGame extends React.Component<NoGameProps, any> {
+    @observable ds: NewGameDialogStore;
     constructor(props: NoGameProps) {
         super(props);
-        this.dialogStore = new gameNameStore(this.do_join_game);
-        this.state = {
-            dialogOpen: false,
-            gameName: ''
-        };
+        this.ds = new NewGameDialogStore(this.start_new_game);
     }
 
-    do_join_game = () => {
-        this.props.routing!.push(`/${this.dialogStore.name}`);
-    };
-
-    start_new_game = () => {
-        const r = new RuLette();
-        this.props.routing!.push(`/${r.id()}`);
+    start_new_game = async () => {
+        const id = await this.props.datastore!.createGame(this.ds.name, this.ds.numwords, this.ds.timer);
+        this.props.routing!.push(`/${id}`);
     };
 
     render() {
-        const { classes } = this.props;
         return <>
             <Container>
-                <Grid container justify="center" spacing={2}>
-                    <Grid item>
-                        <Button
-                            variant="contained"
-                            className={classes!.button}
-                            onClick={this.dialogStore.open}>
-                            Join a game
-                        </Button>
-                        <Button
-                            variant="contained"
-                            color="secondary"
-                            className={classes!.button}
-                            onClick={this.start_new_game}>
-                            Create game
-                        </Button>
-                    </Grid>
-                    <Dialog open={this.dialogStore.isOpen}>
-                        <DialogTitle>
-                            Enter the game's name
-                        </DialogTitle>
-                        <form onSubmit={(ev) => {ev.preventDefault(); this.dialogStore.submit()}}>
-                            <DialogContent>
-                                <Input type="text"
-                                       onChange={(ev) => this.dialogStore.setName(ev.target.value)}
-                                       autoFocus />
-                            </DialogContent>
-                            <DialogActions>
-                                <Button onClick={this.dialogStore.close}>Cancel</Button>
-                                <Button type="submit">Join</Button>
-                            </DialogActions>
-                        </form>
-                    </Dialog>
-                </Grid>
+                <MidButton variant="contained" color="secondary" onClick={this.ds.open}>Новая игра</MidButton>
             </Container>
+            <Dialog open={this.ds.isOpen} onClose={this.ds.close}>
+                <form>
+                    <DialogTitle>Начнём новую игру!</DialogTitle>
+                    <DialogContent>
+                        <TextField id="name" label="Имя игры" value={this.ds.name} onChange={this.ds.change('name')} fullWidth/>
+                        <TextField id="numwords" label="Сколько слов придумываем" type="number" value={this.ds.numwords} onChange={this.ds.changenum('numwords')} fullWidth/>
+                        <TextField id="timer" label="Секунд на ход" type="number" value={this.ds.timer} onChange={this.ds.changenum('timer')} fullWidth/>
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={this.ds.close}>Отмена</Button>
+                        <Button onClick={this.ds.submit} variant="contained" color="primary">Начали!</Button>
+                    </DialogActions>
+                </form>
+            </Dialog>
         </>;
     }
 }
-export default withStyles(styles)(NoGame);
