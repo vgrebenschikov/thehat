@@ -1,4 +1,5 @@
 from aiohttp import web, WSMsgType
+from asyncio import CancelledError
 
 from settings import log
 from . import message
@@ -73,9 +74,6 @@ class Login(web.View):
 
 
 class WebSocket(web.View):
-    async def error(self, ws, code, msg):
-        log.error(msg)
-        await ws.send_json(message.Error(code=code, message=msg).data())
 
     async def get(self):
         gid = self.request.match_info.get('id', '00000000-0000-0000-0000-000000000000')
@@ -96,35 +94,26 @@ class WebSocket(web.View):
 
         await ws.prepare(self.request)
 
-        async for msg in ws:
-            log.debug(f'websocket message received: {msg.type}: {msg.data.strip()}')
-            if msg.type == WSMsgType.text:
+        while True:
+            try:
                 try:
-                    data = json.loads(msg.data)
-                except Exception as e:
-                    await self.error(ws, 101, f'Broken message received {e}')
-                    continue
+                    data = await ws.receive_json()
+                except TypeError:
+                    # TypeError might be raised if WSMsgType.CLOSED was received
+                    if ws.closed:
+                        game.close(ws)
+                        break
+                    else:
+                        log.debug('ws connection closed with exception %s' % ws.exception())
+                        break
 
-                if 'cmd' not in data:
-                    await self.error(ws, 102, f'Invalid message format {msg.data}')
-                    continue
-                else:
-                    cmdtxt = data['cmd']
+                await game.cmd(ws, data)
 
-                cmd = getattr(game, cmdtxt, None)
-                if not callable(cmd):
-                    await self.error(ws, 103, f'Unknown command {cmdtxt}')
-                    continue
-
-                try:
-                    log.debug(f'Received command {cmdtxt}')
-                    await cmd(ws, message.ClientMessage.msg(data))
-                except Exception as e:
-                    log.exception(f"Exception caught while execution of '{cmdtxt}': {e}")
-                    await self.error(ws, 104, f"Error executing command '{cmdtxt}': {e}")
-
-            elif msg.type == WSMsgType.error:
-                log.debug('ws connection closed with exception %s' % ws.exception())
+            except CancelledError:
+                await game.close(ws)
+                break
+            except Exception as e:
+                log.exception(f"Unexpected exception was caught: {e}")
 
         self.request.app.websockets.discard(ws)
         log.debug('websocket connection closed')

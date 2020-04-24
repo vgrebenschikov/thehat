@@ -25,6 +25,7 @@ class Message(ABC):
 
     @classmethod
     def msg(cls, data):
+        data = data.copy()
         if ABC in cls.__bases__:
             if 'cmd' not in data:
                 raise ValueError('cmd is not specified')
@@ -56,8 +57,11 @@ class Message(ABC):
         return ret
 
     def data(self):
-        ret = {'cmd': self.__class__.__name__.lower(), **self.args()}
+        ret = {'cmd': self.cmd(), **self.args()}
         return ret
+
+    def cmd(self):
+        return self.__class__.__name__.lower()
 
 
 class ClientMessage(Message, ABC):

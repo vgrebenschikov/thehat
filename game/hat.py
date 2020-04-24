@@ -12,6 +12,20 @@ from typing import (List, Dict, Optional)
 PlayerList = List[Player]
 PlayerDict = Dict[str, Player]
 
+commands = []
+
+
+def handler(method):
+    """Decorator to mark methods callable through API"""
+
+    async def call(self, ws, *args):
+        log.debug(f'Received command {method.__name__}')
+        await method(self, ws, *args)
+
+    commands.append(method.__name__)
+
+    return call
+
 
 class HatGame:
     ST_SETUP = 'setup'
@@ -67,8 +81,39 @@ class HatGame:
             if p.socket is not None:
                 await p.socket.send_json(msg.data())
 
+    async def error(self, ws, code, msgtxt):
+        """Respond with error and log error"""
+
+        log.error(msgtxt)
+        await ws.send_json(message.Error(code=code, message=msgtxt).data())
+
+    async def cmd(self, ws, data):
+        """Command multiplexer"""
+
+        global commands
+
+        try:
+            msg = message.ClientMessage.msg(data)
+        except Exception as e:
+            await self.error(ws, 102, f'Invalid message format {data} - {e}')
+            return
+
+        cmdtxt = msg.cmd()
+        cmd = getattr(self, cmdtxt, None)
+        if msg.cmd() not in commands or not callable(cmd):
+            await self.error(ws, 103, f'Unknown command {cmdtxt}')
+            return
+
+        try:
+            await cmd(ws, msg)
+        except Exception as e:
+            log.exception(f"Exception caught while execution of '{cmdtxt}': {e}")
+            await self.error(ws, 104, f"Error executing command '{cmdtxt}': {e}")
+
+    @handler
     async def name(self, ws, msg: message.Name):
         """Set my name - (re)login procedure on socket"""
+
         name = msg.name
 
         if name not in self.players_map:
@@ -107,10 +152,12 @@ class HatGame:
             state=self.state
         )
 
+    @handler
     async def game(self, ws):
         """Notify just known Player about Game layout"""
         await ws.send_json(self.game_msg().data())
 
+    @handler
     async def words(self, ws, msg: message.Words):
         """Player sends it's words to server"""
         words = msg.words
@@ -120,6 +167,7 @@ class HatGame:
 
         await self.prepare()
 
+    @handler
     async def setup(self, ws, msg: message.Setup):
         self.game_name = msg.name or self.game_name
         self.num_words = msg.numwords or self.num_words
@@ -137,6 +185,7 @@ class HatGame:
         else:
             await self.broadcast(msg)
 
+    @handler
     async def play(self, ws, msg: message.Play):
         """Move Game from ST_SETUP phase to ST_PLAY - start game"""
         if self.state not in (HatGame.ST_SETUP, HatGame.ST_FINISH):
@@ -257,6 +306,7 @@ class HatGame:
         m = message.Next(word=self.turn.word)
         await self.turn.explaining.socket.send_json(m.data())
 
+    @handler
     async def ready(self, ws, msg: message.Ready):
         """Tell server that player is ready to guess/explain"""
         if self.state != HatGame.ST_PLAY:
@@ -283,6 +333,7 @@ class HatGame:
             await self.broadcast(message.Start())
             await self.next_word()
 
+    @handler
     async def guessed(self, ws, msg: message.Guessed):
         """Guessing User tell us of he guessed right"""
         sent_by = self.sockets_map[id(ws)]
@@ -342,7 +393,8 @@ class HatGame:
             log.error(f'Exception while process timer: {e}')
             log.exception()
 
-    async def close(self, ws, msg: message.Close):
+    @handler
+    async def close(self, ws, msg: message.Close = None):
         """Close connection"""
         p = self.sockets_map[id(ws)]
         del self.sockets_map[id(ws)]
@@ -351,6 +403,7 @@ class HatGame:
 
         await p.socket.close()
 
+    @handler
     async def restart(self, ws, msg: message.Restart):
         """Restart the game"""
 
@@ -372,6 +425,7 @@ class HatGame:
 
         await self.broadcast(self.game_msg())
 
+    @handler
     async def reset(self, ws, msg: message.Restart):
         """Reset the game - disconnect all users except me"""
 
