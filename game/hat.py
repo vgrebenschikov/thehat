@@ -252,7 +252,7 @@ class HatGame:
         """Select next word for pair"""
         if len(self.tour_words) == 0:
             raise ValueError("No more words - unexpected")
-        self.turn.set_word(self.tour_words.pop(random.randrange(0, len(self.tour_words))))
+        self.turn.word = self.tour_words.pop(random.randrange(0, len(self.tour_words)))
 
         m = message.Next(word=self.turn.word)
         await self.turn.explaining.socket.send_json(m.data())

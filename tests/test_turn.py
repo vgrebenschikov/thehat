@@ -21,7 +21,7 @@ class TestTurn(TestCase):
     def test_set_words(self):
         t = Turn(explaining=Player(name='Explanee'), guessing=Player(name='Guessee'))
         w = 'someword'
-        t.set_word(w)
+        t.word = w
         assert t.word == w
 
     def test_guessed(self):
@@ -29,20 +29,20 @@ class TestTurn(TestCase):
         w1 = 'someword'
         w2 = 'anotherword'
         w3 = 'thirdword'
-        t.set_word(w1)
+        t.word = w1
         assert t.result() == 0
         t.guessed(False)
         assert t.result() == 0
         assert t.missed_words == [w1]
-        t.set_word(w2)
+        t.word = w2
         t.guessed(True)
         assert t.result() == 1
         assert t.missed_words == [w1]
-        t.set_word(w2)
+        t.word = w2
         t.guessed(True)
         assert t.result() == 2
         assert t.missed_words == [w1]
-        t.set_word(w3)
+        t.word = w3
         t.guessed(False)
         assert t.result() == 2
         assert t.missed_words == [w1, w3]
