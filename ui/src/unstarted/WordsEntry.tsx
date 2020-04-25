@@ -42,6 +42,7 @@ class AddWordDialogStore extends DialogStore {
 @observer
 class AddButton extends React.Component<{ datastore?: DataStore }, {}> {
   submit = () => {
+    this.ds.word = this.ds.word.toLowerCase().replace(/^\S/, l => l.toUpperCase())
     this.props.datastore!.addOwnWord(this.ds.word);
   };
 
@@ -117,7 +118,7 @@ export default class WordsEntry extends React.Component<{datastore?: DataStore},
     return <>
       <WordList>
         {words.map((w) => <WordCard word={w} onDelete={() => this.deleteWord(w)} key={w}/>)}
-        <AddButton/>
+        {words.length < this.props.datastore!.game!.gameNumWords! && <AddButton/>}
       </WordList>
       <BottomButton>
         <Button className="button" onClick={this.commitWords}><i className="material-icons-round">check</i>Готово</Button>
