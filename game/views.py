@@ -19,7 +19,7 @@ class NewGame(web.View):
             return web.Response(
                 status=500,
                 content_type='application/json',
-                text=json.dumps(message.Error(code=103, message='Duplicate game ID').data())
+                text=json.dumps(message.Error(code=103, message='Duplicate game ID').data(), ensure_ascii=False)
             )
 
         self.request.app.games[game.id] = game
@@ -32,7 +32,7 @@ class NewGame(web.View):
 
         return web.Response(
             content_type='application/json',
-            text=json.dumps(game.game_msg().args()),
+            text=json.dumps(game.game_msg().args(), ensure_ascii=False),
             headers=headers
         )
 
@@ -62,7 +62,7 @@ class GetGame(web.View):
 
         return web.Response(
             content_type='application/json',
-            text=json.dumps(game.game_msg().args()))
+            text=json.dumps(game.game_msg().args(), ensure_ascii=False))
 
 
 class ListGames(web.View):
@@ -78,7 +78,7 @@ class ListGames(web.View):
 
         return web.Response(
             content_type='application/json',
-            text=json.dumps(ret))
+            text=json.dumps(ret, ensure_ascii=False))
 
 
 class Login(web.View):

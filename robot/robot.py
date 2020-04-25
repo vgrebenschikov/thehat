@@ -10,7 +10,7 @@ import random
 from typing import (List, Dict, Optional)
 from colorama import Fore, Back, Style
 
-from .words import Words
+from .words import NOUNS
 import game.message as message
 import settings
 from settings import log
@@ -76,7 +76,7 @@ class Robot:
     async def newgame(self, name=None, numwords=6, timer=1):
         session = ClientSession()
         ng = message.Newgame(name=name, timer=timer)
-        resp = await session.post(f'{self.uri}/games', data=json.dumps(ng.data()))
+        resp = await session.post(f'{self.uri}/games', data=json.dumps(ng.data(), ensure_ascii=False))
         gm = message.Game().msg(await resp.json())
         self.id = gm.id
         self.name = gm.name
@@ -131,7 +131,7 @@ class Robot:
         self.logE(f'Error: {message}')
 
     async def send_msg(self, msg):
-        self.logC(f'>> {json.dumps(msg.data())}')
+        self.logC(f'>> {json.dumps(msg.data(), ensure_ascii=False)}')
         await self.ws.send_json(msg.data())
 
     async def receive(self):
@@ -141,7 +141,7 @@ class Robot:
             if tmsg.type == WSMsgType.text:
                 try:
                     data = json.loads(tmsg.data)
-                    self.logS(f'<< {tmsg.data}')
+                    self.logS(f'<< {json.dumps(data, ensure_ascii=False)}')
                 except Exception as e:
                     self.error(f'Broken message received {e}')
                     continue
@@ -211,7 +211,7 @@ class Robot:
         g = await self.wait_msg(message.Game)
         ww = []
         for wi in range(0, g.numwords):
-            ww.append(Words.get_random_word())
+            ww.append(NOUNS.get_random_word())
 
         await self.send_msg(message.Words(words=ww))
 

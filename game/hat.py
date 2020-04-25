@@ -4,8 +4,10 @@ from .player import Player
 from .turn import Turn
 from .timer import Timer
 from shlyapa import Shlyapa, Config
+from robot.words import NAMES
 
 import datetime
+import json
 import uuid
 import random
 from typing import (List, Dict, Optional)
@@ -55,7 +57,7 @@ class HatGame:
         self.all_words = []
         self.tour_words = []
         self.id = str(uuid.uuid4())
-        self.game_name = name or self.id
+        self.game_name = name or NAMES.get_random_word()
         self.state = HatGame.ST_SETUP
         self.shlyapa = None
         self.num_words = numwords or 6
@@ -80,6 +82,9 @@ class HatGame:
         return True
 
     async def send_json(self, ws, msg):
+        def dumps(data):
+            return json.dumps(data, ensure_ascii=False)
+
         self.last_event_time = datetime.datetime.now()
         await ws.send_json(msg.data())
 

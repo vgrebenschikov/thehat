@@ -7,7 +7,7 @@ from game.hat import HatGame
 
 class MockWebSocket():
     def __init__(self):
-        self.send_json = AsyncMock()
+        self.send_json = AsyncMock(side_effect=send_json)
 
 
 @pytest.fixture()

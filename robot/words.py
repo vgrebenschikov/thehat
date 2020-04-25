@@ -1,27 +1,33 @@
 import random
 import requests
+from pathlib import Path
 
 
 class Words:
-    WORDS = None
 
-    @classmethod
-    def load_word(cls):
-        word_file = "/usr/share/dict/words"
-        word_site = "http://svnweb.freebsd.org/csrg/share/dict/words?view=co&content-type=text/plain"
+    def __init__(self, file=None, site=None):
+        self._words = None
 
         try:
-            cls.WORDS = open(word_file).read().splitlines()
+            self._words = open(file).read().splitlines()
         except Exception:
             pass
 
-        if not cls.WORDS:
-            response = requests.get(word_site)
-            cls.WORDS = response.content.splitlines()
+        if not self._words and site is not None:
+            response = requests.get(site)
+            self._words = response.content.splitlines()
 
-    @classmethod
-    def get_random_word(cls):
-        if not cls.WORDS:
-            cls.load_word()
+        if self._words is None:
+            raise ValueError("Can't load words")
 
-        return cls.WORDS[random.randrange(0, len(cls.WORDS))]
+    def get_random_word(self):
+        return self._words[random.randrange(0, len(self._words))].title()
+
+
+dictdir = Path(__file__).parent.parent.absolute()
+NOUNS = Words(file=dictdir / 'dict/nouns.txt')
+NAMES = Words(file=dictdir / 'dict/names.txt')
+# WORDS = Words(file='/usr/share/dict/words')
+# WORDS = Words(site='http://svnweb.freebsd.org/csrg/share/dict/words?view=co&content-type=text/plain')
+
+__all__ = [Words, NOUNS, NAMES]

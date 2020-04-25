@@ -14,7 +14,7 @@ class Message(ABC):
                 setattr(self, pn, kwargs[pn])
 
     def __str__(self):
-        return json.dumps(self.data())
+        return json.dumps(self.data(), ensure_ascii=False)
 
     def __eq__(self, other):
         return type(self) == type(other) and \
