@@ -23,7 +23,7 @@ const MidButton = styled(Button)({
 }) as typeof Button;
 
 class NewGameDialogStore extends DialogStore {
-    @observable name: string = 'Интересная игра';
+    @observable name: string = '';
     @observable numwords: number = 5;
     @observable timer: number = 20;
 }
