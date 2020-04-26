@@ -18,10 +18,10 @@ const DrawerContents = styled(Box)({
   minWidth: '230px',
 });
 
-const PersonItem = (props: {person: string, ready: boolean}) => {
+const PersonItem = (props: {person: string, words: number}) => {
   return <ListItem>
     <ListItemText primary={props.person}/>
-    {props.ready && <ListItemSecondaryAction><i className="material-icons-round">check</i></ListItemSecondaryAction>}
+    {props.words > 0 && <ListItemSecondaryAction>{props.words}</ListItemSecondaryAction>}
   </ListItem>
 };
 
@@ -53,7 +53,7 @@ export default inject('datastore')(observer((props: {datastore?: DataStore}) => 
     </Title>
     <List>
       {game.players.map((user) => {
-        return <PersonItem person={user.name} ready={user.done} key={user.uid}/>
+        return <PersonItem person={user.name} words={user.wordsSent} key={user.uid}/>
       })}
     </List>
     <BottomPad>

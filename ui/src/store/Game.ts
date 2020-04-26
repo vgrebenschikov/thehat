@@ -7,7 +7,7 @@ import UIStore from './UIStore';
 export interface Player {
     name: string;
     uid: string;
-    done: boolean;
+    wordsSent: number;
 }
 
 export type TourResults = { [player: string]: number };
@@ -70,7 +70,7 @@ export default class Game {
         this.ws = new WebSocketConnection(name);
         this.ws.reconnect();
         this.ws.subscribeReceiver(this.onMessageReceived);
-        this.user = { name: user.displayName || 'Unknown', uid: user.uid, done: false };
+        this.user = { name: user.displayName || 'Unknown', uid: user.uid, wordsSent: 0 };
         setInterval(this.updateTimeLeft, 1000);
         if (this.ws.connectionStatus === ConnectionStatus.Established) {
             // Otherwise, connect() will be called when connection is established.
@@ -162,7 +162,7 @@ export default class Game {
 
     @action.bound
     cmdPrepare (data: any) {
-        this.players = Object.entries(data.players).map(([p, v]) => ({name: p, uid: '', done: v !== 0}));
+        this.players = Object.entries(data.players).map(([p, v]) => ({name: p, uid: '', wordsSent: v as number}));
     };
 
     @action.bound
