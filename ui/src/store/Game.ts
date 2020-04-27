@@ -5,6 +5,7 @@ import WebSocketConnection, {ConnectionStatus} from "./WebSocketConnection";
 import {GameState, PlayerRole, PlayerState} from "./types";
 import UIStore from './UIStore';
 
+const startBell = new UIfx('/start.mp3');
 const timeoutBell = new UIfx('/timesup2.mp3');
 
 export interface Player {
@@ -203,6 +204,7 @@ export default class Game {
     cmdStart (data: any) {
         if (this.myRole !== PlayerRole.WATCHER) {
             this.myState = PlayerState.PLAY;
+            startBell.play();
         }
         this.timerStart = new Date();
         this.updateTimeLeft();
