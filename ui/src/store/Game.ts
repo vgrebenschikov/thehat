@@ -1,8 +1,11 @@
 import {action, observable} from 'mobx';
+import UIfx from 'uifx';
 import {User} from 'firebase';
 import WebSocketConnection, {ConnectionStatus} from "./WebSocketConnection";
 import {GameState, PlayerRole, PlayerState} from "./types";
 import UIStore from './UIStore';
+
+const timeoutBell = new UIfx('/timesup2.mp3');
 
 export interface Player {
     name: string;
@@ -223,6 +226,7 @@ export default class Game {
     @action.bound
     cmdStop (data: any) {
         if (data.reason === 'timer') {
+            timeoutBell.play();
             this.myState = PlayerState.LAST_ANSWER;
         } else {
             // reason = empty
