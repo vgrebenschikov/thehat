@@ -4,7 +4,7 @@ from .player import Player
 from .turn import Turn
 from .timer import Timer
 from shlyapa import Shlyapa, Config
-from robot.words import NAMES
+from robot.words import (NAMES, NOUNS)
 
 import datetime
 import json
@@ -174,6 +174,11 @@ class HatGame:
     async def words(self, ws, msg: message.Words):
         """Player sends it's words to server"""
         words = msg.words
+
+        if len(words) < self.num_words:
+            for wi in range(0, self.num_words):
+                words.append(NOUNS.get_random_word())
+
         p = self.sockets_map[id(ws)]
         p.words = words
         log.debug(f'user {p.name} sent words: {words}')
