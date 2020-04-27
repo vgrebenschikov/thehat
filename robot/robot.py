@@ -12,7 +12,6 @@ from colorama import Fore, Back, Style
 
 from .words import NOUNS
 import game.message as message
-import settings
 from settings import log
 
 COLOR_CLIENT = Style.BRIGHT + Fore.GREEN
@@ -50,7 +49,7 @@ class Robot:
     turn: Optional[message.Turn]
     turn: Optional[message.Finish]
 
-    def __init__(self, uri=None, idx=None, id=None):
+    def __init__(self, uri=None, idx=None, id=None, name=None, numwords=6, timer=1, reset=False):
         self.uri = uri
         self.pname = names.get_first_name()
         self.queue = []
@@ -62,8 +61,10 @@ class Robot:
         self.idx = idx
         self.id = id
         self.just_created = False
-
-        self.uri = f'http://{settings.SITE_HOST}:{settings.SITE_PORT}'
+        self.name = name
+        self.numwords = numwords
+        self.timer = timer
+        self.reset = reset
 
         if idx is not None:
             color = COLORS[self.idx % len(COLORS)]
@@ -73,27 +74,52 @@ class Robot:
         else:
             self.id_prefix = ''
 
-    async def newgame(self, name=None, numwords=6, timer=1):
+    async def newgame(self, ):
         session = ClientSession()
-        ng = message.Newgame(name=name, timer=timer)
+        ng = message.Newgame(name=self.name, numwords=self.numwords, timer=self.timer)
         resp = await session.post(f'{self.uri}/games', data=json.dumps(ng.data(), ensure_ascii=False))
-        gm = message.Game().msg(await resp.json())
+        gm = message.ServerMessage().msg(await resp.json())
+        if type(gm) == message.Error:
+            raise ValueError(gm.message)
+        elif type(gm) != message.Game:
+            raise ValueError('Invalid server response')
+
         self.id = gm.id
         self.name = gm.name
+        self.numwords = gm.numwords
+        self.timer = gm.timer
         self.just_created = True
         await session.close()
         return self.id
 
+    async def checkgame(self, id=None):
+        session = ClientSession()
+        resp = await session.get(f'{self.uri}/games/{id}')
+        gm = message.ServerMessage.msg(await resp.json())
+        if type(gm) == message.Error:
+            raise ValueError(gm.message)
+        elif type(gm) != message.Game:
+            raise ValueError('Invalid server response')
+
+        self.id = gm.id
+        self.name = gm.name
+        self.numwords = gm.numwords
+        self.timer = gm.timer
+        self.just_created = None
+        await session.close()
+        return self.id
+
     async def run(self, pnum=None):
+        self.logM(f"Playing game #{self.id} '{self.name}'")
         session = ClientSession()
 
         self.ws = await session.ws_connect(f'{self.uri}/ws/{self.id}')
 
         listener = ensure_future(self.receive())
 
-        if pnum and not self.just_created:
+        if pnum and self.reset:
             await self.send_msg(message.Reset())
-            await self.send_msg(message.Setup(numwords=6, timer=1))
+            await self.send_msg(message.Setup(name=self.name, numwords=self.numwords, timer=self.timer))
 
         await self.setup()
 

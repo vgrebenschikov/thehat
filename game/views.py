@@ -32,7 +32,7 @@ class NewGame(web.View):
 
         return web.Response(
             content_type='application/json',
-            text=json.dumps(game.game_msg().args(), ensure_ascii=False),
+            text=json.dumps(game.game_msg().data(), ensure_ascii=False),
             headers=headers
         )
 
@@ -62,7 +62,7 @@ class GetGame(web.View):
 
         return web.Response(
             content_type='application/json',
-            text=json.dumps(game.game_msg().args(), ensure_ascii=False))
+            text=json.dumps(game.game_msg().data(), ensure_ascii=False))
 
 
 class ListGames(web.View):
