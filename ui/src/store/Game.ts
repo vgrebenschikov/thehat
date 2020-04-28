@@ -1,8 +1,12 @@
 import {action, observable} from 'mobx';
+import UIfx from 'uifx';
 import {User} from 'firebase';
 import WebSocketConnection, {ConnectionStatus} from "./WebSocketConnection";
 import {GameState, PlayerRole, PlayerState} from "./types";
 import UIStore from './UIStore';
+
+const startBell = new UIfx('/start.mp3');
+const timeoutBell = new UIfx('/timesup2.mp3');
 
 export interface Player {
     name: string;
@@ -200,6 +204,7 @@ export default class Game {
     cmdStart (data: any) {
         if (this.myRole !== PlayerRole.WATCHER) {
             this.myState = PlayerState.PLAY;
+            startBell.play();
         }
         this.timerStart = new Date();
         this.updateTimeLeft();
@@ -223,6 +228,7 @@ export default class Game {
     @action.bound
     cmdStop (data: any) {
         if (data.reason === 'timer') {
+            timeoutBell.play();
             this.myState = PlayerState.LAST_ANSWER;
         } else {
             // reason = empty
