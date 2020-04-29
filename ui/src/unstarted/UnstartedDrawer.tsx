@@ -2,15 +2,17 @@ import {inject, observer} from "mobx-react";
 import DataStore from "../store/DataStore";
 import React from "react";
 import {
+  Avatar,
   Box,
   Button,
   List,
-  ListItem,
+  ListItem, ListItemAvatar,
   ListItemSecondaryAction,
   ListItemText,
   styled,
   Typography
 } from "@material-ui/core";
+import {Player} from "../store/Game";
 
 const DrawerContents = styled(Box)({
   width: '60vw',
@@ -18,10 +20,14 @@ const DrawerContents = styled(Box)({
   minWidth: '230px',
 });
 
-const PersonItem = (props: {person: string, words: number}) => {
+const PersonItem = (props: {user: Player}) => {
+  const {name, words, avatar} = props.user;
   return <ListItem>
-    <ListItemText primary={props.person}/>
-    {props.words > 0 && <ListItemSecondaryAction>{props.words}</ListItemSecondaryAction>}
+    <ListItemAvatar>
+      <Avatar src={avatar}>??</Avatar>
+    </ListItemAvatar>
+    <ListItemText primary={name}/>
+    {words > 0 && <ListItemSecondaryAction>{words}</ListItemSecondaryAction>}
   </ListItem>
 };
 
@@ -53,7 +59,7 @@ export default inject('datastore')(observer((props: {datastore?: DataStore}) => 
     </Title>
     <List>
       {game.players.map((user) => {
-        return <PersonItem person={user.name} words={user.wordsSent} key={user.uid}/>
+        return <PersonItem user={user} key={user.name}/>
       })}
     </List>
     <BottomPad>

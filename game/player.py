@@ -8,6 +8,7 @@ class Player:
     state: str
     socket = None
     __name: Optional[str] = None
+    __avatar: Optional[str] = None
     __words: List[str]
     __machine: Machine
 
@@ -20,10 +21,11 @@ class Player:
     ST_LAST_ANSWER = 'lastanswer'  # Waiting for last explanation results (time is out)
     ST_FINISH = 'finish'           # Finishing turn
 
-    def __init__(self, name=None, socket=None):
+    def __init__(self, name=None, avatar=None, socket=None):
         self.state = Player.ST_UNKNOWN
         self.socket = socket
         self.__name = name
+        self.__avatar = avatar
         self.__words = []
 
         states = [v for k, v in Player.__dict__.items() if k.startswith('ST_')]
@@ -55,6 +57,10 @@ class Player:
     @property
     def name(self):
         return self.__name
+
+    @property
+    def avatar(self):
+        return self.__avatar
 
     @name.setter
     def name(self, name):

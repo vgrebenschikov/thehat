@@ -90,7 +90,7 @@ async def test_name_connect_first():
     print(ws.send_json.await_args_list)
     ws.send_json.assert_has_awaits([
         call(g.game_msg().data()),
-        call(message.Prepare(players={m.name: 0}).data())
+        call(message.Prepare(players={m.name: [0, None]}).data())
     ], any_order=False)
 
 
@@ -105,7 +105,7 @@ async def test_name_connect_second():
     g.state = HatGame.ST_SETUP
     await g.name(ws2, m)
     print(ws2.send_json.await_args_list)
-    pm = message.Prepare(players={m.name: 0, 'test1': 0})
+    pm = message.Prepare(players={m.name: [0, None], 'test1': [0, None]})
     ws2.send_json.assert_has_awaits([
         call(g.game_msg().data()),
         call(pm.data())

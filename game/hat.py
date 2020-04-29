@@ -66,7 +66,7 @@ class HatGame:
         self.timer = None
         self.last_event_time = datetime.datetime.now()
 
-    def register_player(self, name=None, socket=None) -> bool:
+    def register_player(self, name=None, avatar=None, socket=None) -> bool:
         """Add new player to game"""
         if name in self.players_map:
             p = self.players_map[name]
@@ -75,7 +75,7 @@ class HatGame:
             self.players_map[name].socket = socket
             return False
 
-        p = Player(name=name, socket=socket)
+        p = Player(name=name, avatar=avatar, socket=socket)
         self.players.append(p)
         self.sockets_map[id(socket)] = p
         self.players_map[name] = p
@@ -141,7 +141,7 @@ class HatGame:
         else:
             log.info(f'Player {name}({id(ws)}) already in list, re-connect user')
 
-        reconnect = not self.register_player(name=name, socket=ws)
+        reconnect = not self.register_player(name=name, avatar=msg.avatar, socket=ws)
 
         await self.game(ws)
         await self.prepare(ws if reconnect else None)  # on reconnect send to self only
@@ -195,7 +195,7 @@ class HatGame:
 
     async def prepare(self, ws=None):
         """Notify All Players about changed set of players"""
-        players = dict([(p.name, len(p.words)) for p in self.players])
+        players = dict([(p.name, message.UserInfo(len(p.words), p.avatar)) for p in self.players])
         msg = message.Prepare(players=players)
 
         if ws is not None:

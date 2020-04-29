@@ -6,8 +6,8 @@ import UIStore from './UIStore';
 
 export interface Player {
     name: string;
-    uid: string;
-    wordsSent: number;
+    words: number;
+    avatar: string | undefined;
 }
 
 export type TourResults = { [player: string]: number };
@@ -70,7 +70,11 @@ export default class Game {
         this.ws = new WebSocketConnection(name);
         this.ws.reconnect();
         this.ws.subscribeReceiver(this.onMessageReceived);
-        this.user = { name: user.displayName || 'Unknown', uid: user.uid, wordsSent: 0 };
+        this.user = {
+            name: user.displayName || 'Unknown',
+            words: 0,
+            avatar: user.photoURL || undefined,
+        };
         setInterval(this.updateTimeLeft, 1000);
         if (this.ws.connectionStatus === ConnectionStatus.Established) {
             // Otherwise, connect() will be called when connection is established.
@@ -100,6 +104,7 @@ export default class Game {
         this.ws.send({
             cmd: 'name',
             name: this.user.name,
+            avatar: this.user.avatar,
         });
         this.tourNumber = null;
         this.turnNumber = null;
@@ -162,7 +167,10 @@ export default class Game {
 
     @action.bound
     cmdPrepare (data: any) {
-        this.players = Object.entries(data.players).map(([p, v]) => ({name: p, uid: '', wordsSent: v as number}));
+        this.players = Object.entries(data.players).map(([p, v]) => {
+            const vv = v as any[];
+            return {name: p, words: vv[0], avatar: vv[1]}
+        });
     };
 
     @action.bound
