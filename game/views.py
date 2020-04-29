@@ -27,7 +27,7 @@ class NewGame(web.View):
         log.info(f"New game created id={game.id}, name='{game.game_name}''")
 
         headers = {}
-        if NEED_CORS:
+        if NEED_CORS and 'Origin' in self.request.headers:
             headers = {'Access-Control-Allow-Origin': self.request.headers['Origin']}
 
         return web.Response(

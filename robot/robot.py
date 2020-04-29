@@ -44,7 +44,7 @@ class Robot:
     uri: str
     ws: ClientWebSocketResponse
     queue: List[message.ServerMessage]
-    players: Dict[str, int]
+    players: Dict[str, message.UserInfo]
     tour: Optional[message.Tour]
     turn: Optional[message.Turn]
     turn: Optional[message.Finish]
@@ -125,7 +125,7 @@ class Robot:
 
         if pnum:
             self.logM(f'Waiting until other {pnum - 1} players connected')
-            while len([p for p, n in self.players.items() if n > 0]) < pnum:
+            while len([p for p, v in self.players.items() if v.words > 0]) < pnum:
                 await self.wait_msg(message.Prepare)
 
             self.logM(f'All players ready - starting the game')
@@ -233,7 +233,10 @@ class Robot:
         return None
 
     async def setup(self):
-        await self.send_msg(message.Name(name=self.pname))
+        await self.send_msg(
+            message.Name(
+                name=self.pname,
+                avatar=f'https://api.adorable.io/avatars/128/{self.pname}.png'))
         g = await self.wait_msg(message.Game)
         ww = []
         for wi in range(0, g.numwords):

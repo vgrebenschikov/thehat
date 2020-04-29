@@ -2,7 +2,7 @@ from abc import ABC
 import json
 import sys
 
-from typing import (List, Dict, get_type_hints)
+from typing import (List, Dict, get_type_hints, Any, Optional, NamedTuple)
 
 
 class Message(ABC):
@@ -93,9 +93,10 @@ class Name(ClientMessage):
     """Client sends his name"""
 
     name: str
+    avatar: str  # url of user avatar
 
-    def __init__(self, name=None):
-        super().__init__(name=name)
+    def __init__(self, name=None, avatar=None):
+        super().__init__(name=name, avatar=avatar)
 
 
 class Words(ClientMessage):
@@ -175,13 +176,23 @@ class Game(ServerMessage):
         super().__init__(id=id, name=name, numwords=numwords, timer=timer, state=state)
 
 
+class UserInfo(NamedTuple):
+    words: int
+    avatar: Optional[str]
+
+
 class Prepare(ServerMessage):
     """Notify everybody about who is joined to game"""
 
-    players: Dict[str, int]
+    players: Dict[str, UserInfo]
 
-    def __init__(self, players=None):
-        super().__init__(players=players)
+    def __init__(self, players: Dict[str, Any]=None):
+        super(Prepare, self).__init__()
+        self.players = {}
+        for k, v in players.items():
+            if isinstance(v, list):
+                v = UserInfo(*v)
+            self.players[k] = v
 
 
 class Wait(ServerMessage):
@@ -260,7 +271,7 @@ if __name__ == '__main__':
 
     server_messages = [
         Game(id="xxxx-id-here", name='Secret Tea', numwords=10, timer=20, state='setup'),
-        Prepare(players={"user1": 5, "user2": 0, "user3": 6}),
+        Prepare(players={"user1": [5, "//"], "user2": [0, "//"], "user3": [6, "//"]}),
         Wait(),
         Tour(tour=1),
         Turn(turn=10, explain="user1", guess="user2"),
@@ -282,7 +293,7 @@ if __name__ == '__main__':
 
     client_messages = [
         Newgame(name='Secret Tea', numwords=6, timer=20),
-        Name(name='vova'),
+        Name(name='vova', avatar='https://api.adorable.io/avatars/128/vova.png'),
         Words(words=["apple", "orange", "banana"]),
         Play(),
         Ready(),
