@@ -236,7 +236,7 @@ class Robot:
         await self.send_msg(
             message.Name(
                 name=self.pname,
-                avatar=f'https://api.adorable.io/avatars/128/{self.pname}.png'))
+                avatar=f'https://robohash.org/{self.pname}'))
         g = await self.wait_msg(message.Game)
         ww = []
         for wi in range(0, g.numwords):

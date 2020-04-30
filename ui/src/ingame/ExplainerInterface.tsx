@@ -30,7 +30,7 @@ const MainBody = observer((props: {game: Game}) => {
   if (game.myState === PlayerState.PLAY || game.myState === PlayerState.LAST_ANSWER) {
     return <>
       <WordShow>
-        <Typography className="centered" variant="h2">
+        <Typography className="centered" variant="h3">
           {game.currentWord}
         </Typography>
       </WordShow>
