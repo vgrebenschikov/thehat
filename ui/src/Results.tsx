@@ -48,13 +48,8 @@ class Results extends React.Component<{datastore?: DataStore}, {}> {
           <TableHead>
             <TableRow>
               <TableCell>Игрок</TableCell>
-<<<<<<< HEAD
               <TableCell><RotatedHeader>Угадал</RotatedHeader></TableCell>
               <TableCell><RotatedHeader>Рассказал</RotatedHeader></TableCell>
-=======
-              <TableCell>Угадал</TableCell>
-              <TableCell>Объяснил</TableCell>
->>>>>>> 637b3a7... Minor change of wording on results page
               <TableCell>Всего</TableCell>
             </TableRow>
           </TableHead>
