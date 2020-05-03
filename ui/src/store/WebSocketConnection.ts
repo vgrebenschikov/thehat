@@ -29,7 +29,7 @@ export default class WebSocketConnection {
 
     @action.bound reconnect = () => {
       this.connectionStatus = ConnectionStatus.Connecting;
-      const wsProto = window.location.protocol === 'https' ? 'wss' : 'ws';
+      const wsProto = window.location.protocol === 'https:' ? 'wss' : 'ws';
       const wsUri = process.env.NODE_ENV === 'development'
         ? `ws:${window.location.hostname}:8088/ws/${this.id}`
         : `${wsProto}:${window.location.host}/ws/${this.id}`;
