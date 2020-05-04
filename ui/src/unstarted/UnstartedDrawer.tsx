@@ -52,13 +52,13 @@ const BottomPad = styled(Box)(({theme}) => ({
 
 export default inject('datastore')(observer((props: {datastore?: DataStore}) => {
   const game = props.datastore?.game!;
-  const numPlayers = game.players.length;
+  const numPlayers = game.playerList.length;
   return <DrawerContents>
     <Title>
       <Typography variant="h6">Игроков: {numPlayers}</Typography>
     </Title>
     <List>
-      {game.players.map((user) => {
+      {game.playerList.map((user) => {
         return <PersonItem user={user} key={user.name}/>
       })}
     </List>

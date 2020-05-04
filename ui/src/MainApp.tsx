@@ -48,13 +48,13 @@ const GameContent = observer((props: {game: Game}) => {
     if (game.myState === PlayerState.WORDS) {
         return <WordsEntry/>;
     }
-    if (game.myState === PlayerState.WAIT) {
-        return <WaitingPlayerInterface/>;
-    }
     if (game.gameState === GameState.FINISH && game.results) {
         return <Results/>;
     }
 
+    if (game.myState === PlayerState.WAIT) {
+        return <WaitingPlayerInterface/>;
+    }
     if (game.myRole === PlayerRole.GUESSER) {
         return <GuesserInterface/>;
     }

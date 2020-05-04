@@ -1,4 +1,4 @@
-import {action, observable} from 'mobx';
+import {action, computed, observable} from 'mobx';
 import UIfx from 'uifx';
 import {User} from 'firebase';
 import WebSocketConnection, {ConnectionStatus} from "./WebSocketConnection";
@@ -13,6 +13,8 @@ export interface Player {
     words: number;
     avatar: string | undefined;
 }
+
+export type PlayerMap = { [player: string]: Player };
 
 export type TourResults = { [player: string]: number };
 
@@ -34,7 +36,7 @@ export default class Game {
     @observable ws: WebSocketConnection;
 
     @observable gameState: GameState = GameState.SETUP;
-    @observable players: Player[] = [];
+    @observable players: PlayerMap = {};
     @observable myState: PlayerState = PlayerState.UNKNOWN;
     @observable myRole: PlayerRole = PlayerRole.WATCHER;
     @observable gameNumWords: number | null = null;
@@ -84,6 +86,12 @@ export default class Game {
             // Otherwise, connect() will be called when connection is established.
             this.connect();
         }
+    }
+
+    @computed get playerList(): Player[] {
+        return Object.getOwnPropertyNames(this.players)
+          .sort()
+          .map((p) => this.players[p]);
     }
 
     onMessageReceived = (data: any) => {
@@ -164,17 +172,21 @@ export default class Game {
         this.gameName = data.name || 'Неизвестная игра';
         this.gameNumWords = data.numwords || null;
         this.turnTime = data.timer || null;
-        this.myState = PlayerState.WORDS;  // TODO: this should come in the 'game' command
-        this.gameState = GameState.SETUP;  // TODO: this should come in the 'game' command
+        this.gameState = data.state;
+        this.myState = data.state === GameState.SETUP ? PlayerState.WORDS : PlayerState.WAIT;
         this.results = null;
     };
 
     @action.bound
-    cmdPrepare (data: any) {
-        this.players = Object.entries(data.players).map(([p, v]) => {
-            const vv = v as any[];
-            return {name: p, words: vv[0], avatar: vv[1]}
-        });
+    cmdPrepare (data: { players: { [player: string]: any[] }}) {
+        this.players = {};
+        for (const [name, v] of Object.entries(data.players)) {
+            this.players[name] = {
+                name: name,
+                words: v[0],
+                avatar: v[1] || `https://robohash.org/${name}?set=set4`
+            };
+        }
     };
 
     @action.bound

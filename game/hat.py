@@ -49,6 +49,7 @@ class HatGame:
     all_words: List[str]
     tour_words: List[str]
     last_event_time: datetime.datetime
+    results: Optional[dict]
 
     def __init__(self, name=None, numwords=6, timer=20):
         self.players = []
@@ -65,6 +66,7 @@ class HatGame:
         self.turn = None
         self.timer = None
         self.last_event_time = datetime.datetime.now()
+        self.results = None
 
     def register_player(self, name=None, avatar=None, socket=None) -> bool:
         """Add new player to game"""
@@ -155,6 +157,8 @@ class HatGame:
                     explain=self.turn.explaining.name,
                     guess=self.turn.guessing.name
                 ))
+        if self.state == HatGame.ST_FINISH and self.results is not None:
+            await self.send_json(ws, message.Finish(results=self.results))
 
     def game_msg(self):
         return message.Game(
@@ -256,13 +260,13 @@ class HatGame:
                 "guessed": guessed_score[p.name]
             }
 
-        results = {
+        self.results = {
             "score": score,
             "explained": [player_array_to_dict(t) for t in s.get_explained_table_results()],
             "guessed": [player_array_to_dict(t) for t in s.get_guessed_table_results()]
         }
 
-        await self.broadcast(message.Finish(results=results))
+        await self.broadcast(message.Finish(results=self.results))
         self.state = HatGame.ST_FINISH
 
         for p in self.players:
@@ -431,6 +435,7 @@ class HatGame:
         self.shlyapa = None
         self.turn = None
         self.timer = None
+        self.results = None
 
     @handler
     async def restart(self, ws, msg: message.Restart):
