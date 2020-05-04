@@ -33,7 +33,7 @@ class Results extends React.Component<{datastore?: DataStore}, {}> {
             <TableRow>
               <TableCell>Игрок</TableCell>
               <TableCell>Угадал</TableCell>
-              <TableCell>Рассказал</TableCell>
+              <TableCell>Объяснил</TableCell>
               <TableCell>Всего</TableCell>
             </TableRow>
           </TableHead>
