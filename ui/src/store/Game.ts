@@ -7,6 +7,7 @@ import UIStore from './UIStore';
 
 const startBell = new UIfx('/start.mp3');
 const timeoutBell = new UIfx('/timesup2.mp3');
+const wordsOutBell = new UIfx('/wordsout.mp3');
 
 export interface Player {
     name: string;
@@ -251,6 +252,7 @@ export default class Game {
             timeoutBell.play();
             this.myState = PlayerState.LAST_ANSWER;
         } else {
+            wordsOutBell.play();
             // reason = empty
             this.myState = PlayerState.FINISH;
         }
