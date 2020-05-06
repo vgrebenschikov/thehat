@@ -16,7 +16,7 @@ export default class WaitingPlayerInterface extends React.Component<{datastore?:
 
     return <>
       <TurnDescription/>
-      {(game?.turnWords || []).map((w: string) => <Card>
+      {(game?.turnWords || []).map((w: string, i: number) => <Card key={i}>
         <Typography variant="body2" className="centered">{w}</Typography>
       </Card>)}
     </>
