@@ -1,7 +1,7 @@
 import React from "react";
 import UIStore from "store/UIStore";
 import DataStore from "store/DataStore";
-import { Dialog, DialogTitle, DialogContent, Typography, DialogActions, DialogContentText, Button } from "@material-ui/core";
+import { Dialog, DialogTitle, DialogContent, DialogActions, DialogContentText, Button } from "@material-ui/core";
 
 import tourDescription from "tourDescription";
 import { inject, observer } from "mobx-react";

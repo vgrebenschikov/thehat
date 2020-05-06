@@ -1,11 +1,6 @@
-import {User} from "firebase";
-import * as firebase from "firebase/app";
-import "firebase/auth";
-import "firebase/firestore";
-import {action, computed, observable, runInAction} from "mobx";
-import Game from "./Game";
-import firebaseConfig from 'firebase-config';
+import { action, computed, observable } from "mobx";
 import UIStore from "store/UIStore";
+import Game, { User } from "./Game";
 
 export default class DataStore {
     @observable user: User | null = null;
@@ -28,17 +23,15 @@ export default class DataStore {
 
     constructor(uistore: UIStore) {
         this.uistore = uistore;
-        firebase.initializeApp(firebaseConfig);
-        firebase.auth().onAuthStateChanged(action((user: User | null) => {
-            this.user = user;
-        }));
     }
 
-    signIn = async () => {
-        try {
-            await firebase.auth().signInWithPopup(new firebase.auth.GoogleAuthProvider())
-        } catch (reason) {
-            runInAction(() => { this.loginError = reason.code })
+    @action
+    signIn = (response: any) => {
+        console.log('resp=', response);
+        if (response.profileObj) {
+            this.user = response.profileObj;
+        } else if (response.error) {
+            this.loginError = response.error;
         }
     };
 

@@ -1,6 +1,5 @@
 import {action, computed, observable} from 'mobx';
 import UIfx from 'uifx';
-import {User} from 'firebase';
 import WebSocketConnection, {ConnectionStatus} from "./WebSocketConnection";
 import {GameState, PlayerRole, PlayerState} from "./types";
 import UIStore from './UIStore';
@@ -8,6 +7,12 @@ import UIStore from './UIStore';
 const startBell = new UIfx('/start.mp3');
 const timeoutBell = new UIfx('/timesup2.mp3');
 const wordsOutBell = new UIfx('/wordsout.mp3');
+
+export interface User {
+    name: string,
+    imageUrl: string | undefined,
+}
+
 
 export interface Player {
     name: string;
@@ -78,9 +83,9 @@ export default class Game {
         this.ws.reconnect();
         this.ws.subscribeReceiver(this.onMessageReceived);
         this.user = {
-            name: user.displayName || 'Unknown',
+            name: user.name || 'Unknown',
             words: 0,
-            avatar: user.photoURL || undefined,
+            avatar: user.imageUrl || undefined,
         };
         setInterval(this.updateTimeLeft, 1000);
         if (this.ws.connectionStatus === ConnectionStatus.Established) {
