@@ -14,9 +14,7 @@ export default inject('datastore', 'uistore')(observer((props: {datastore?: Data
         <DialogTitle>Смена тура</DialogTitle>
         <DialogContent>
             <DialogContentText>
-                <Typography variant="h5">
-                    {tourDescription[tourNumber!]}
-                </Typography>
+                {tourDescription[tourNumber!]}
             </DialogContentText>
         </DialogContent>
         <DialogActions>

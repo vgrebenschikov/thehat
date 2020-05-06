@@ -22,7 +22,7 @@ const MainBody = observer((props: {game: Game}) => {
 
   if (game.myState === PlayerState.PLAY) {
     return <>
-      {(game?.turnWords || []).map((w: string) => <Card>
+      {(game?.turnWords || []).map((w: string, i: number) => <Card key={i}>
         <Typography variant="body2" className="centered">{w}</Typography>
       </Card>)}
       <MidCard>
