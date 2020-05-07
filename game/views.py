@@ -115,7 +115,6 @@ class WebSocket(web.View):
                 except TypeError:
                     # TypeError might be raised if WSMsgType.CLOSED was received
                     if ws.closed:
-                        await game.close(ws)
                         break
                     else:
                         log.debug('ws connection closed with exception %s' % ws.exception())
@@ -124,7 +123,6 @@ class WebSocket(web.View):
                 await game.cmd(ws, data)
 
             except CancelledError:
-                await game.close(ws)
                 break
             except Exception as e:
                 log.exception(f"Unexpected exception was caught: {e}")
