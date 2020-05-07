@@ -418,12 +418,18 @@ class HatGame:
     @handler
     async def close(self, ws, msg: message.Close = None):
         """Close connection"""
-        p = self.sockets_map[id(ws)]
-        del self.sockets_map[id(ws)]
-        del self.players_map[p.name]
-        self.players.remove(p)
+        p = self.sockets_map.pop(id(ws), None)
+        if p:
+            self.players_map.pop(p.name, None)
+            if p in self.players:
+                self.players.remove(p)
 
-        await p.socket.close()
+            try:
+                await p.socket.close()
+            except Exception:
+                pass
+
+            p.socket = None
 
     def reinit(self):
         if self.timer:
@@ -450,6 +456,7 @@ class HatGame:
             p.reset()
 
         await self.broadcast(self.game_msg())
+        await self.prepare()
 
     @handler
     async def reset(self, ws=None, msg: message.Restart = None):

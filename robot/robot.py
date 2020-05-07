@@ -132,6 +132,7 @@ class Robot:
             await self.send_msg(message.Play())
 
         await self.play()
+        await self.send_msg(message.Close())
 
         listener.cancel()
         await session.close()

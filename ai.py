@@ -1,13 +1,11 @@
 #!/usr/bin/env python3
 from asyncio import (get_event_loop, ensure_future, gather, sleep)
-import json
 import sys
 import getopt
 import logging
-import requests
 from typing import (Optional)
+from urllib.parse import (urlparse, urlunparse)
 
-from game import message
 from robot.robot import Robot
 import settings
 
@@ -49,7 +47,7 @@ class Options:
 
         print(f"""
 USAGE:
-    {sys.argv[0]} [<flags>] [<game-id>]
+    {sys.argv[0]} [<flags>] [<game-id>|<game-uri>]
 Flags:
     -h, --help          Help (this)
     -a, --auto  <num>   Auto-play with <num> players (same, as -p <num> -r <num>)
@@ -125,6 +123,17 @@ Flags:
 
         if len(args):
             self.id = args[0]
+
+            try:
+                """if id sent as URI, set also self.site, also recode front port to back"""
+                uri = urlparse(self.id)
+                self.id = uri.path[1:]
+                netloc = uri.netloc
+                if netloc.endswith(':3000'):
+                    netloc = f'{netloc.split(":")[0]}:{settings.SITE_PORT}'
+                self.site = urlunparse((uri.scheme, netloc, *([''] * 4)))
+            except Exception:
+                pass
 
     def args(self):
         return {
