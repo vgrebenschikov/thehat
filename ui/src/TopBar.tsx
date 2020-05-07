@@ -19,6 +19,8 @@ import {inject, observer} from "mobx-react";
 import React, {createRef} from "react";
 import DataStore from "./store/DataStore";
 import UIStore from "./store/UIStore";
+import GoogleLogin from "react-google-login";
+import loginConfig from "login-config";
 
 const styles = (theme: Theme) => createStyles({
     menuButton: {
@@ -40,24 +42,33 @@ const useStyles = makeStyles(styles);
 
 const UserDesignator = inject("datastore")(observer((props: { datastore?: DataStore }) => {
     const {datastore} = props;
-    if (!datastore?.user) {
+    if (!datastore!.user) {
         return null;
     }
-    const name = datastore.userName;
-    const picture = datastore?.user.photoURL;
+    const name = datastore!.user.name;
+    const picture = datastore?.user.imageUrl;
     return picture ? <Avatar alt={name} src={picture}/> : <Avatar alt={name}>?</Avatar>;
 }));
 
 const LoginDialog = inject("datastore")(observer((props: { datastore?: DataStore }) => {
     const {datastore} = props;
     return <Dialog open={!datastore?.user}>
-        <DialogTitle>Log in required</DialogTitle>
+        <DialogTitle>Будем знакомы</DialogTitle>
         <DialogContent>
             <DialogContentText>
-                Logging in is required to use Cotify.
+                Чтобы играть в Шляпу, необходимо представиться
             </DialogContentText>
             <DialogActions>
-                <Button variant="contained" onClick={datastore?.signIn}>Sign in with Google</Button>
+                <GoogleLogin
+                    clientId={loginConfig.googleClientId}
+                    buttonText="Войти"
+                    onSuccess={datastore!.signIn}
+                    onFailure={datastore!.signIn}
+                    isSignedIn={true}
+                    render={props => (
+                        <Button onClick={props.onClick} variant="contained" disabled={props.disabled}>Войти через Google</Button>
+                    )}
+                    cookiePolicy={'single_host_origin'}/>
             </DialogActions>
             {datastore?.loginError && <Typography variant="body2" color="error">{datastore.loginError}</Typography>}
         </DialogContent>
