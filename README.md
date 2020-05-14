@@ -17,7 +17,7 @@ The Hat (Shlyapa) online game
 
 # Technology Stack 
 * Backend
-  * python3
+  * python-3.8
   * aiohttp
   * WebSockets to communicate with frontend 
 * Frontend 
@@ -27,10 +27,17 @@ The Hat (Shlyapa) online game
   * material-ui
 
 # How to Run
+
+## Requirements
+  * python 3.8
+  * nodejs + yarn
+  * nginx
+
 ## Backend 
 
 Running server for development 
 ```bash
+$ pip install -r requirements.txt
 $ python app.py
 ======== Running on http://0.0.0.0:8088 ========
 (Press CTRL+C to quit)
@@ -60,6 +67,7 @@ $ gunicorn --bind 0.0.0.0:8088 --worker-class aiohttp.worker.GunicornWebWorker -
 
 ## How to run tests suite
 ```bash
+$ pip install -r test-requirements.txt
 $ pytest tests --cov=. --cov-report=xml --cov-report=term-missing --no-cov-on-fail
 ```
 
@@ -84,9 +92,10 @@ $ yarn build
 Then put build/ folder under site root
 
 ## Example of nginx config to for hat server
-```
 # Hat Game server
+Setup nginx to run hat server with following config:
 
+```
 upstream back {
 	server 127.0.0.1:8088 max_conns=512;
 }
