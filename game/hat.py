@@ -245,7 +245,8 @@ class HatGame:
 
     async def finish(self, s: Shlyapa):
         def player_array_to_dict(score_list):
-            return dict([(self.players[i].name, v) for i, v in enumerate(score_list)])
+            pn = len(self.players)
+            return dict([(self.players[i].name, v) for i, v in enumerate(score_list) if i < pn])
 
         s.calculate_results()
         total_score = player_array_to_dict(s.get_total_score_results())
@@ -275,13 +276,15 @@ class HatGame:
 
         log.debug('Game finished')
 
-    async def next_move(self, explained_words=None):
+    async def next_move(self):
         """Do next move, called on game start or after move finished"""
 
+        explained_words = None
         if self.turn:
             self.turn.explaining.wait()
             self.turn.guessing.wait()
 
+            explained_words = self.turn.result()
             # return to pool words which was miss-guessed by previous pair
             missed_words = self.turn.missed_words
             if len(missed_words):
@@ -378,7 +381,7 @@ class HatGame:
         if self.turn.explaining.state == Player.ST_LAST_ANSWER:
             """Answer after timer exhausted"""
             self.turn.explaining.finish()
-            await self.next_move(explained_words=self.turn.result())
+            await self.next_move()
 
             return
 
@@ -394,7 +397,7 @@ class HatGame:
             self.turn.explaining.finish()
             self.turn.guessing.finish()
 
-            await self.next_move(explained_words=self.turn.result())
+            await self.next_move()
 
             return
 
@@ -417,12 +420,20 @@ class HatGame:
 
     @handler
     async def close(self, ws, msg: message.Close = None):
-        """Close connection"""
+        """Close connection, exit user"""
         p = self.sockets_map.pop(id(ws), None)
         if p:
             self.players_map.pop(p.name, None)
             if p in self.players:
                 self.players.remove(p)
+
+            if self.turn and p in self.turn:
+                self.turn.abort()
+
+                try:
+                    await self.next_move()
+                except Exception:
+                    pass
 
             try:
                 await p.socket.close()
@@ -430,6 +441,10 @@ class HatGame:
                 pass
 
             p.socket = None
+
+            pn = len(self.players)
+            if pn > 2:
+                self.shlyapa.config.set_number_players(pn)
 
     def reinit(self):
         if self.timer:

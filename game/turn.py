@@ -17,6 +17,9 @@ class Turn:
         self.__num_guessed = 0
         self.__word = None
 
+    def __contains__(self, p: Player):
+        return p in (self.explaining, self.guessing)
+
     def guessed(self, result: bool = None) -> None:
         if result:
             self.__num_guessed += 1
@@ -37,3 +40,9 @@ class Turn:
 
     def result(self) -> int:
         return self.__num_guessed
+
+    def abort(self) -> None:
+        self.explaining.reset()
+        self.explaining.wait()
+        self.guessing.reset()
+        self.guessing.wait()

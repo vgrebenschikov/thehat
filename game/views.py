@@ -112,12 +112,17 @@ class WebSocket(web.View):
             try:
                 try:
                     data = await ws.receive_json()
+
+                except json.decoder.JSONDecodeError as e:
+                    log.debug(f'Invalid message format {e}')
+                    continue
+
                 except TypeError:
                     # TypeError might be raised if WSMsgType.CLOSED was received
                     if ws.closed:
                         break
                     else:
-                        log.debug('ws connection closed with exception %s' % ws.exception())
+                        log.debug(f'ws connection closed with exception {ws.exception()}')
                         break
 
                 await game.cmd(ws, data)
