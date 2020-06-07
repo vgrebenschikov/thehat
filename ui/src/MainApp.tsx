@@ -1,33 +1,32 @@
 import React from "react";
-import {Button, Container, Drawer, Paper, styled, Typography} from "@material-ui/core";
-import {inject, observer} from 'mobx-react';
+import { Button, Container, Paper, styled, Typography } from "@material-ui/core";
+import { inject, observer } from 'mobx-react';
 
 import DataStore from "store/DataStore";
 import Game from "store/Game";
-import {GameState, PlayerRole, PlayerState} from "store/types";
+import { GameState, PlayerRole, PlayerState } from "store/types";
 
 import WordsEntry from "unstarted/WordsEntry";
 import GuesserInterface from "ingame/GuesserInterface";
-import {MidCard} from "common/Card";
+import { MidCard } from "common/Card";
 import ExplainerInterface from "ingame/ExplainerInterface";
 import tourDescripton from "tourDescription";
 import TurnChangeDialog from "TurnChangeDialog";
-import {ConnectionStatus} from "./store/WebSocketConnection";
-import UnstartedDrawer from "./unstarted/UnstartedDrawer";
-import UIStore from "./store/UIStore";
-import Results from "./Results";
-import WaitingPlayerInterface from "./ingame/WaitingPlayerInterface";
+import { ConnectionStatus } from "store/WebSocketConnection";
+import Results from "Results";
+import WaitingPlayerInterface from "ingame/WaitingPlayerInterface";
+import Drawer from 'drawer/Drawer';
 
 const StatusSurface = styled(Paper)({
     padding: '8px',
     marginBottom: '16px',
 }) as typeof Paper;
 
-const StatusBar = inject('datastore')(observer((props: {datastore?: DataStore}) => {
-    const {game} = props.datastore!;
+const StatusBar = inject('datastore')(observer((props: { datastore?: DataStore }) => {
+    const { game } = props.datastore!;
     let status = '';
     if (game?.myState === PlayerState.WORDS) {
-           status = `Придумывайте слова (${game?.gameNumWords} штук)`;
+        status = `Придумывайте слова (${game?.gameNumWords} штук)`;
     } else if (game?.tourNumber || game?.tourNumber === 0) {
         status = tourDescripton[game?.tourNumber];
     }
@@ -36,30 +35,30 @@ const StatusBar = inject('datastore')(observer((props: {datastore?: DataStore}) 
     </StatusSurface>;
 }));
 
-const MainContainer = styled(Container)(({theme}) => ({
+const MainContainer = styled(Container)(({ theme }) => ({
     flexGrow: 1,
     display: "flex",
     flexDirection: 'column',
     minHeight: 0,
 })) as typeof Container;
 
-const GameContent = observer((props: {game: Game}) => {
-    const {game} = props;
+const GameContent = observer((props: { game: Game }) => {
+    const { game } = props;
     if (game.myState === PlayerState.WORDS) {
-        return <WordsEntry/>;
+        return <WordsEntry />;
     }
     if (game.gameState === GameState.FINISH && game.results) {
-        return <Results/>;
+        return <Results />;
     }
 
     if (game.myState === PlayerState.WAIT) {
-        return <WaitingPlayerInterface/>;
+        return <WaitingPlayerInterface />;
     }
     if (game.myRole === PlayerRole.GUESSER) {
-        return <GuesserInterface/>;
+        return <GuesserInterface />;
     }
     if (game.myRole === PlayerRole.EXPLAINER) {
-        return <ExplainerInterface/>;
+        return <ExplainerInterface />;
     }
 
     return null;
@@ -67,42 +66,27 @@ const GameContent = observer((props: {game: Game}) => {
 
 @inject('datastore')
 @observer
-class BadWebsocket extends React.Component<{datastore?: DataStore}, any> {
+class BadWebsocket extends React.Component<{ datastore?: DataStore }, any> {
     render_reconnecting() {
         return <Typography className="centered" variant="body1">Нет связи, пытаемся пробиться...</Typography>;
     }
     render_disconnected() {
-        const {ws} = this.props.datastore!.game!;
+        const { ws } = this.props.datastore!.game!;
         return <>
-            <Typography className="content" variant="body1">Всё пропало! Попробуем ещё?</Typography><br/>
+            <Typography className="content" variant="body1">Всё пропало! Попробуем ещё?</Typography><br />
             <Button className="content" variant="contained" onClick={() => ws.reconnectManually()}>ОК</Button>
         </>;
     }
     render() {
-        const {ws} = this.props.datastore!.game!;
+        const { ws } = this.props.datastore!.game!;
         return <MidCard>
             {ws.connectionStatus === ConnectionStatus.Disconnected ?
-              this.render_disconnected() :
-              this.render_reconnecting()
+                this.render_disconnected() :
+                this.render_reconnecting()
             }
         </MidCard>;
     }
 }
-
-interface CommonDrawerProps {
-    datastore?: DataStore;
-    uistore?: UIStore;
-}
-
-const CommonDrawer = inject('datastore', 'uistore')(observer((props: CommonDrawerProps) => {
-    const {uistore, datastore} = props;
-    if (datastore!.game?.gameState !== GameState.SETUP) {
-        return null;
-    }
-    return <Drawer open={uistore!.drawerOpen} onClose={() => uistore!.setDrawerOpen(false)}>
-        <UnstartedDrawer/>
-    </Drawer>;
-}));
 
 interface MainAppProps {
     datastore?: DataStore;
@@ -122,16 +106,16 @@ export default class MainApp extends React.Component<MainAppProps, {}> {
         if (game?.ws.connectionStatus === ConnectionStatus.Disconnected
             || game?.ws.connectionStatus === ConnectionStatus.Retrying) {
             return <MainContainer>
-                <BadWebsocket/>
+                <BadWebsocket />
             </MainContainer>;
         }
         return <>
-            <StatusBar/>
+            <StatusBar />
             <MainContainer>
-                {game && <GameContent game={game}/>}
+                {game && <GameContent game={game} />}
             </MainContainer>
-            <TurnChangeDialog/>
-            <CommonDrawer/>
+            <TurnChangeDialog />
+            <Drawer />
         </>;
     }
 }
