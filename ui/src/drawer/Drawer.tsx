@@ -7,6 +7,7 @@ import UIStore from 'store/UIStore';
 
 import { GameState } from 'store/types';
 import UnstartedDrawer from 'drawer/UnstartedDrawer';
+import InGameDrawer from 'drawer/InGameDrawer';
 
 interface CommonDrawerProps {
     datastore?: DataStore;
@@ -18,6 +19,8 @@ export default inject('datastore', 'uistore')(observer((props: CommonDrawerProps
     let drawerContent: React.ReactElement | undefined;
     if (datastore!.game?.gameState === GameState.SETUP) {
         drawerContent = <UnstartedDrawer />;
+    } else if (datastore!.game?.gameState === GameState.PLAY) {
+        drawerContent = <InGameDrawer />;
     } else {
         return null;
     }

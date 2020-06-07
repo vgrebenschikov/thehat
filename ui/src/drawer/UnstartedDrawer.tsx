@@ -43,5 +43,8 @@ export default inject('datastore')(observer((props: { datastore?: DataStore }) =
     <BottomPad>
       <Button variant="contained" color="primary" onClick={game.sendPlay}>Начать игру</Button>
     </BottomPad>
+    <BottomPad>
+      <Button variant="contained" color="secondary" onClick={props.datastore!.leaveGame}>Покинуть игру</Button>
+    </BottomPad>
   </DrawerContents>;
 }));

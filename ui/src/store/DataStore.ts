@@ -37,8 +37,8 @@ export default class DataStore {
 
     createGame = async (name: string, numwords: number, timer: number) => {
         const url = process.env.NODE_ENV === 'development'
-          ? `//${window.location.hostname}:8088/games`
-          : `//${window.location.host}/games`;
+            ? `//${window.location.hostname}:8088/games`
+            : `//${window.location.host}/games`;
 
         const resp = await fetch(url, {
             method: 'POST',
@@ -48,8 +48,8 @@ export default class DataStore {
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({name, numwords, timer}),
-          });
+            body: JSON.stringify({ name, numwords, timer }),
+        });
         const ret = await resp.json();
         return ret.id;
     };
@@ -57,6 +57,15 @@ export default class DataStore {
     joinGame = action((name: string) => {
         if (this.game?.id !== name) {
             this.game = new Game(name, this.user!, this.uistore);
+        }
+    });
+
+    leaveGame = action(() => {
+        if (this.game) {
+            this.game.sendClose();
+            this.game = null;
+            console.log('redirecting...');
+            window.location.replace('/');
         }
     });
 

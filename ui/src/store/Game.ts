@@ -1,7 +1,7 @@
-import {action, computed, observable} from 'mobx';
+import { action, computed, observable } from 'mobx';
 import UIfx from 'uifx';
-import WebSocketConnection, {ConnectionStatus} from "./WebSocketConnection";
-import {GameState, PlayerRole, PlayerState} from "./types";
+import WebSocketConnection, { ConnectionStatus } from "./WebSocketConnection";
+import { GameState, PlayerRole, PlayerState } from "./types";
 import UIStore from './UIStore';
 
 const startBell = new UIfx('/start.mp3');
@@ -25,11 +25,13 @@ export type PlayerMap = { [player: string]: Player };
 export type TourResults = { [player: string]: number };
 
 export interface GameResults {
-    score: {[player: string]: {
+    score: {
+        [player: string]: {
             total: number;
             explained: number;
             guessed: number;
-    }};
+        }
+    };
 
     explained: TourResults[];
     guessed: TourResults[];
@@ -57,7 +59,7 @@ export default class Game {
     @observable turnWords: string[] = [];
     @observable results: GameResults | null = null;
 
-    private readonly commands: {[k: string]: (data: any) => void};
+    private readonly commands: { [k: string]: (data: any) => void };
     private uistore: UIStore;
 
     user: Player;
@@ -96,8 +98,8 @@ export default class Game {
 
     @computed get playerList(): Player[] {
         return Object.getOwnPropertyNames(this.players)
-          .sort()
-          .map((p) => this.players[p]);
+            .sort()
+            .map((p) => this.players[p]);
     }
 
     onMessageReceived = (data: any) => {
@@ -174,7 +176,14 @@ export default class Game {
     }
 
     @action.bound
-    cmdGame (data: any) {
+    sendClose() {
+        this.ws.send({
+            cmd: 'close',
+        })
+    }
+
+    @action.bound
+    cmdGame(data: any) {
         this.gameName = data.name || 'Неизвестная игра';
         this.gameNumWords = data.numwords || null;
         this.turnTime = data.timer || null;
@@ -184,7 +193,7 @@ export default class Game {
     };
 
     @action.bound
-    cmdPrepare (data: { players: { [player: string]: any[] }}) {
+    cmdPrepare(data: { players: { [player: string]: any[] } }) {
         this.players = {};
         for (const [name, v] of Object.entries(data.players)) {
             this.players[name] = {
@@ -196,19 +205,19 @@ export default class Game {
     };
 
     @action.bound
-    cmdWait (data: any) {
+    cmdWait(data: any) {
         this.gameState = GameState.SETUP;
     };
 
     @action.bound
-    cmdTour (data: any) {
+    cmdTour(data: any) {
         this.tourNumber = data.tour === undefined ? null : data.tour;
         this.gameState = GameState.PLAY;
         this.uistore.setTourDialogOpen(true);
     };
 
     @action.bound
-    cmdTurn (data: any) {
+    cmdTurn(data: any) {
         this.turnNumber = data.turn || null;
         this.explainer = data.explain || null;
         this.guesser = data.guess || null;
@@ -227,7 +236,7 @@ export default class Game {
     };
 
     @action.bound
-    cmdStart (data: any) {
+    cmdStart(data: any) {
         if (this.myRole !== PlayerRole.WATCHER) {
             this.myState = PlayerState.PLAY;
             startBell.play();
@@ -237,22 +246,22 @@ export default class Game {
     };
 
     @action.bound
-    cmdNext (data: any) {
+    cmdNext(data: any) {
         this.currentWord = data.word;
     };
 
     @action.bound
-    cmdExplained (data: any) {
+    cmdExplained(data: any) {
         this.turnWords.push(data.word);
     };
 
     @action.bound
-    cmdMissed (data: any) {
+    cmdMissed(data: any) {
         this.turnWords.push('--- не угадали ---');
     };
 
     @action.bound
-    cmdStop (data: any) {
+    cmdStop(data: any) {
         if (data.reason === 'timer') {
             timeoutBell.play();
             this.myState = PlayerState.LAST_ANSWER;
@@ -264,14 +273,14 @@ export default class Game {
     };
 
     @action.bound
-    cmdFinish (data: any) {
+    cmdFinish(data: any) {
         this.gameState = GameState.FINISH;
         this.timerStart = null;
         this.results = data.results || null;
     };
 
     @action.bound
-    cmdError (data: any) {
+    cmdError(data: any) {
 
     };
 }
