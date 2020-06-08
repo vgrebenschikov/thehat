@@ -5,3 +5,4 @@ envparse
 pyyaml>=5.3.0
 colorama>=0.4.3
 requests>=2.23.0
+gunicorn>=20.0.4
