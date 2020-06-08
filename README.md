@@ -15,6 +15,9 @@ The Hat (Shlyapa) online game
 - **Turn** - part of the game when selected pair explains words in limited time-frame
 - **Round** - complete set of **Turns** when all combination of players acted
 
+# Online Server
+To play TheHat game, go here: [PLAY](https://hat.fbsd.ru).
+
 # Technology Stack 
 * Backend
   * python-3.8
