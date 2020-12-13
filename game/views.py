@@ -70,11 +70,17 @@ class ListGames(web.View):
 
         log.info(f"List Games num={len(self.request.app.games)}")
 
+        # filters
+        fname = self.request.rel_url.query.get('name', '').lower()
+
         ret = []
         for game in self.request.app.games.values():
+            if fname and game.game_name.lower() != fname:
+                continue
+
             ret.append(game.game_msg().args())
 
-        log.info(f"Get Game id={game.id}, name='{game.game_name}'")
+        log.info(f"List Games, {len(ret)} returned out of {len(self.request.app.games)}")
 
         return web.Response(
             content_type='application/json',
