@@ -8,6 +8,7 @@ export enum GameState {
 export enum PlayerState {
   UNKNOWN = 'unknown',         // Just connected - unknown
   WORDS = 'words',             // Waiting for words from player
+  WAITSTART = 'waitstart',     // Words sent to server, waiting for game to start
   WAIT = 'wait',               // Waiting for his move
   BEGIN = 'begin',             // Begin of turn, player selected in pair
   READY = 'ready',             // Player ready to start turn
