@@ -7,6 +7,7 @@ import Game from "store/Game";
 import { GameState, PlayerRole, PlayerState } from "store/types";
 
 import WordsEntry from "unstarted/WordsEntry";
+import WaitingForStartInterface from "unstarted/WaitingForStartInterface";
 import GuesserInterface from "ingame/GuesserInterface";
 import { MidCard } from "common/Card";
 import ExplainerInterface from "ingame/ExplainerInterface";
@@ -51,6 +52,9 @@ const GameContent = observer((props: { game: Game }) => {
         return <Results />;
     }
 
+    if (game.myState === PlayerState.WAITSTART) {
+        return <WaitingForStartInterface />;
+    }
     if (game.myState === PlayerState.WAIT) {
         return <WaitingPlayerInterface />;
     }
