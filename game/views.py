@@ -59,10 +59,14 @@ class GetGame(web.View):
             )
 
         log.info(f"Get Game id={game.id}, name='{game.game_name}'")
+        headers = {}
+        if NEED_CORS and 'Origin' in self.request.headers:
+            headers = {'Access-Control-Allow-Origin': self.request.headers['Origin']}
 
         return web.Response(
             content_type='application/json',
-            text=json.dumps(game.game_msg().data(), ensure_ascii=False))
+            text=json.dumps(game.game_msg().data(), ensure_ascii=False),
+            headers=headers)
 
 
 class ListGames(web.View):
@@ -81,10 +85,14 @@ class ListGames(web.View):
             ret.append(game.game_msg().args())
 
         log.info(f"List Games, {len(ret)} returned out of {len(self.request.app.games)}")
+        headers = {}
+        if NEED_CORS and 'Origin' in self.request.headers:
+            headers = {'Access-Control-Allow-Origin': self.request.headers['Origin']}
 
         return web.Response(
             content_type='application/json',
-            text=json.dumps(ret, ensure_ascii=False))
+            text=json.dumps(ret, ensure_ascii=False),
+            headers=headers)
 
 
 class Login(web.View):
